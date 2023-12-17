@@ -1,0 +1,1112 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "required": [
+        "network",
+        "temporal_boundary"
+    ],
+    "properties": {
+        "network": {
+            "type": "object",
+            "required": [
+                "global",
+                "area",
+                "zone",
+                "bus",
+                "load",
+                "shunt",
+                "gen",
+                "storage",
+                "switch",
+                "ac_line",
+                "transformer",
+                "hvdc_p2p",
+                "reserve"
+            ],
+            "properties": {
+                "global": {
+                    "type": "object",
+                    "required": [
+                        "base_mva"
+                    ],
+                    "properties": {
+                        "base_mva": {
+                            "$ref": "#/$defs/positive_number"
+                        },
+                        "bus_ref": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/nonnegative_integer"
+                            }
+                        }
+                    }
+                },
+                "area": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {}
+                        }
+                    }
+                },
+                "zone": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {}
+                        }
+                    }
+                },
+                "bus": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "base_kv"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "base_kv": {
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "type": {
+                                "anyOf": [
+                                    { "type": "integer", "minimum": 1, "maximum": 3 },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "vm_lb": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/positive_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "vm_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/positive_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "area": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "zone": {
+                                "$ref": "#/$defs/uid"
+                            }
+                        }
+                    }
+                },
+                "load": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus",
+                            "pd",
+                            "qd",
+                            "pd_i",
+                            "qd_i",
+                            "pd_y",
+                            "qd_y"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "pd": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qd": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pd_i": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qd_i": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pd_y": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qd_y": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "shunt": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus",
+                            "num_steps_ub",
+                            "gs",
+                            "bs"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "num_steps_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_integer" },
+                                    { "type": "array", "items": { "$ref": "#/$defs/nonnegative_integer" } }
+                                ]
+                            },
+                            "gs": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "type": "array", "items": { "$ref": "#/$defs/nonnegative_number" } }
+                                ]
+                            },
+                            "bs": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "type": "array", "items": { "type": "number" } }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "gen": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "vm_setpoint": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/positive_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pg_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pg_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qg_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qg_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "primary_source": {
+                                "type": "string",
+                                "enum": [
+                                            "COAL",
+                                            "OIL",
+                                            "GAS",
+                                            "NUCLEAR",
+                                            "BIOMASS",
+                                            "GEOTHERMAL",
+                                            "SOLAR",
+                                            "WIND",
+                                            "HYDRO",
+                                            "OTHER"
+                                        ]
+                            },
+                            "primary_source_subtype": {
+                                "type": "string",
+                                "enum": [
+                                            "ANTRHC_BITMN_COAL",
+                                            "WASTE_COAL",
+                                            "DISTILLATE_FUEL_OIL",
+                                            "WASTE_OIL",
+                                            "PETROLEUM_COKE",
+                                            "RESIDUAL_FUEL_OIL",
+                                            "NATURAL_GAS",
+                                            "OTHER_GAS",
+                                            "NUCLEAR",
+                                            "AG_BIPRODUCT",
+                                            "MUNICIPAL_WASTE",
+                                            "WOOD_WASTE",
+                                            "GEOTHERMAL",
+                                            "SOLAR_PV",
+                                            "SOLAR_CSP",
+                                            "WIND_ONSHORE",
+                                            "WIND_OFFSHORE",
+                                            "HYDRO_RUN_OF_THE_RIVER",
+                                            "HYDRO_DAM",
+                                            "HYDRO_PUMPED_STORAGE",
+                                            "OTHER"
+                                        ]
+                            },
+                            "cost_pg_model": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2
+                            },
+                            "cost_pg_parameters": {
+                                "anyOf": [
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "startup_cost_hot": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "startup_cost_warm": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "startup_cost_cold": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "startup_time_hot": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "startup_time_warm": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "startup_time_cold": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "in_service_time_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "in_service_time_lb": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "down_time_lb": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "pg_delta_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "pg_delta_lb": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "service_required": {
+                                "anyOf": [
+                                    { "type": "integer", "minimum": 0, "maximum": 2},
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "shutdown_cost" : {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "storage": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus",
+                            "charge_efficiency",
+                            "discharge_efficiency",
+                            "ps_ex",
+                            "qs_ex"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "charge_efficiency": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "discharge_efficiency": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "ps_ex": {
+                                "type": "number"
+                            },
+                            "qs_ex": {
+                                "type": "number"
+                            },
+                            "energy_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "charge_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "discharge_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "sm_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "cm_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "qs_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qs_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "ps_delta_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "ps_delta_lb": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            }
+                        }
+                    }
+                },
+                "switch": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus_fr",
+                            "bus_to"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus_fr": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "bus_to": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "sm_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "cm_ub": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            }
+                        }
+                    }
+                },
+                "ac_line": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus_fr",
+                            "bus_to",
+                            "r",
+                            "x",
+                            "g_fr",
+                            "b_fr",
+                            "g_to",
+                            "b_to"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus_fr": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "bus_to": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "r": {
+                                "type": "number"
+                            },
+                            "x": {
+                                "type": "number"
+                            },
+                            "g_fr": {
+                                "type": "number"
+                            },
+                            "b_fr": {
+                                "type": "number"
+                            },
+                            "g_to": {
+                                "type": "number"
+                            },
+                            "b_to": {
+                                "type": "number"
+                            },
+                            "sm_ub_a": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "sm_ub_b": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "sm_ub_c": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_a": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_b": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_c": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "vad_lb": {
+                                "type": "number"
+                            },
+                            "vad_ub": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                },
+                "transformer": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus_fr",
+                            "bus_to",
+                            "r",
+                            "x",
+                            "g",
+                            "b"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus_fr": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "bus_to": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "r": {
+                                "type": "number"
+                            },
+                            "x": {
+                                "type": "number"
+                            },
+                            "g": {
+                                "type": "number"
+                            },
+                            "b": {
+                                "type": "number"
+                            },
+                            "tm_lb": {
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "tm_ub": {
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "tm_steps":{
+                                "$ref": "#/$defs/positive_integer"
+                            },
+                            "ta_lb": {
+                                "type": "number"
+                            },
+                            "ta_ub": {
+                                "type": "number"
+                            },
+                            "ta_steps":{
+                                "$ref": "#/$defs/positive_integer"
+                            },
+                            "sm_ub_a": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "sm_ub_b": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "sm_ub_c": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_a": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_b": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_c": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "hvdc_p2p": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "bus_fr",
+                            "bus_to",
+                            "r",
+                            "p",
+                            "technology",
+                            "loss_a",
+                            "loss_b",
+                            "loss_c"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "bus_fr": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "bus_to": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "base_kv_dc": {
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "vm_dc_lb": {
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "vm_dc_ub": {
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "pdc_fr_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qdc_fr_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pdc_fr_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qdc_fr_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pdc_to_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qdc_to_lb": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pdc_to_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "qdc_to_ub": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "r": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "p": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2
+                            },
+                            "technology": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 3
+                            },
+                            "loss_a": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "loss_b": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "loss_c": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "sm_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "phi_lb": {
+                                "type": "number"
+                            },
+                            "phi_ub": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                },
+                "reserve": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "reserve_type"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/binary" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "source_uid": {},
+                            "reserve_type": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 3
+                            },
+                            "participants": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/uid"
+                                }
+                            },
+                            "pg_lb": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "pg_ub": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "temporal_boundary": {
+            "type": "object",
+            "required": [
+                "global",
+                "gen",
+                "storage"
+            ],
+            "properties": {
+                "global": {
+                    "type": "object",
+                    "required": [
+                        "time_elapsed"
+                    ],
+                    "properties": {
+                        "time_elapsed": {
+                            "$ref": "#/$defs/nonnegative_number"
+                        }
+                    }
+                },
+                "gen": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "pg_prev",
+                            "in_service_time_prev",
+                            "down_time_prev"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "source_uid": {},
+                            "pg_prev": {
+                                "type": "number"
+                            },
+                            "in_service_time_prev": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "down_time_prev": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            }
+                        }
+                    }
+                },
+                "storage": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "energy_prev"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "source_uid": {},
+                            "energy_prev": {
+                                "$ref": "#/$defs/nonnegative_number"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "time_series_data": {
+            "type": "object",
+            "required": [
+                "uid"
+            ],
+            "properties": {
+                "uid": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/uid"
+                    }
+                },
+                "name": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "source_uid": {
+                    "type": "array"
+                },
+                "path_to_file": {
+                    "anyOf": [
+                        { "type": "string"},
+                        { "type": "array", "items": { "type": "string" } }
+                    ]
+                },
+                "timestamp": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/nonnegative_integer"
+                    }
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "array"
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "binary": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+        },
+        "nonnegative_integer": {
+            "type": "integer",
+            "minimum" : 0
+        },
+        "nonnegative_number": {
+            "type": "number",
+            "minimum" : 0
+        },
+        "positive_integer": {
+            "type": "integer",
+            "exclusiveMinimum" : 0
+        },
+        "positive_number": {
+            "type": "number",
+            "exclusiveMinimum" : 0
+        },
+        "uid": {
+            "anyOf": [
+                { "type": "integer", "minimum": 0 },
+                { "type": "string" }
+            ]
+        },
+        "time_series_reference" : {
+            "type": "object",
+            "required": [
+                "uid",
+                "scale_factor"
+            ],
+            "properties": {
+                "uid": {
+                    "anyOf" : [
+                        { "type": "integer", "minimum": 0 },
+                        { "type": "string" }
+                    ]
+                },
+                "scale_factor": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}
