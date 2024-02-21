@@ -27,9 +27,17 @@
                 "global": {
                     "type": "object",
                     "required": [
-                        "base_mva"
+                        "unit_convention"
                     ],
                     "properties": {
+                        "unit_convention": {
+                            "type": "string",
+                            "enum": [
+                                        "NATURAL_UNITS",
+                                        "PER_UNIT_COMPONENT_BASE",
+                                        "PER_UNIT_SYSTEM_BASE"
+                                    ]
+                        },
                         "base_mva": {
                             "$ref": "#/$defs/positive_number"
                         },
@@ -173,6 +181,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -241,6 +252,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -288,6 +302,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -462,6 +479,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -549,6 +569,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus_fr": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -594,6 +617,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus_fr": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -691,6 +717,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus_fr": {
                                 "$ref": "#/$defs/uid"
                             },
@@ -796,6 +825,9 @@
                                 "type": "string"
                             },
                             "source_uid": {},
+                            "nominal_mva": {
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "bus_fr": {
                                 "$ref": "#/$defs/uid"
                             },

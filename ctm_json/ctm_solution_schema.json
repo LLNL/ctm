@@ -8,23 +8,37 @@
         "solution": {
             "type": "object",
             "required": [
+                "global",
                 "bus",
-                "shunt",
                 "gen",
-                "storage",
-                "switch",
-                "ac_line",
-                "transformer",
                 "hvdc_p2p"
             ],
             "properties": {
+                "global": {
+                    "type": "object",
+                    "required": [
+                        "unit_convention"
+                    ],
+                    "properties": {
+                        "unit_convention": {
+                            "type": "string",
+                            "enum": [
+                                        "NATURAL_UNITS",
+                                        "PER_UNIT_COMPONENT_BASE",
+                                        "PER_UNIT_SYSTEM_BASE"
+                                    ]
+                        },
+                        "base_mva": {
+                            "$ref": "#/$defs/positive_number"
+                        }
+                    }
+                },
                 "bus": {
                     "type": "array",
                     "items": {
                         "type": "object",
                         "required": [
                             "uid",
-                            "vm",
                             "va"
                         ],
                         "properties": {
@@ -42,7 +56,32 @@
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "p_imbalance": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "q_imbalance": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "p_lambda": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "q_lambda": {
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -64,7 +103,8 @@
                                     { "type": "array", "items": { "$ref": "#/$defs/nonnegative_integer" } },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -74,8 +114,7 @@
                         "type": "object",
                         "required": [
                             "uid",
-                            "pg",
-                            "qg"
+                            "pg"
                         ],
                         "properties": {
                             "uid": {
@@ -98,7 +137,8 @@
                                     { "$ref": "#/$defs/binary" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -109,7 +149,6 @@
                         "required": [
                             "uid",
                             "ps",
-                            "qs",
                             "energy"
                         ],
                         "properties": {
@@ -145,7 +184,8 @@
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -155,8 +195,6 @@
                         "type": "object",
                         "required": [
                             "uid",
-                            "psw_fr",
-                            "qsw_fr",
                             "state"
                         ],
                         "properties": {
@@ -180,7 +218,8 @@
                                     { "$ref": "#/$defs/binary" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -189,11 +228,7 @@
                     "items": {
                         "type": "object",
                         "required": [
-                            "uid",
-                            "pl_fr",
-                            "ql_fr",
-                            "pl_to",
-                            "ql_to"
+                            "uid"
                         ],
                         "properties": {
                             "uid": {
@@ -222,7 +257,8 @@
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -231,11 +267,7 @@
                     "items": {
                         "type": "object",
                         "required": [
-                            "uid",
-                            "pt_fr",
-                            "qt_fr",
-                            "pt_to",
-                            "qt_to"
+                            "uid"
                         ],
                         "properties": {
                             "uid": {
@@ -276,7 +308,8 @@
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 },
@@ -286,11 +319,8 @@
                         "type": "object",
                         "required": [
                             "uid",
-                            "vm_dc",
                             "pdc_fr",
-                            "qdc_fr",
-                            "pdc_to",
-                            "qdc_to"
+                            "pdc_to"
                         ],
                         "properties": {
                             "uid": {
@@ -325,7 +355,8 @@
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
-                            }
+                            },
+                            "source_uid": {}
                         }
                     }
                 }
