@@ -11,7 +11,7 @@ multiple advantages over existing data formats, both open and closed.
 * `ctm_json`: contains the current JSON specification for CTM.
 * `generated`: contains *class* definitions code generated from the JSON CTM schema. The purpose of
   these classes is to parse and manage CTM datasets in multiple programming languages.
-* `example`: contains example datasets in CTM JSON format.
+* `examples`: contains example datasets in CTM JSON format.
 
 ## Author
 Ignacio Aravena, aravenasolis1@llnl.gov.
