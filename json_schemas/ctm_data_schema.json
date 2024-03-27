@@ -1,5 +1,6 @@
 {
     "$schema": "http://json-schema.org/schema#",
+    "title": "Common Transmission Model (CTM) Data Schema",
     "type": "object",
     "required": [
         "network",
@@ -7,6 +8,7 @@
     ],
     "properties": {
         "network": {
+            "description": "structure to hold persistent network data",
             "type": "object",
             "required": [
                 "global",
@@ -14,23 +16,18 @@
                 "zone",
                 "bus",
                 "load",
-                "shunt",
-                "gen",
-                "storage",
-                "switch",
-                "ac_line",
-                "transformer",
-                "hvdc_p2p",
-                "reserve"
+                "gen"
             ],
             "properties": {
                 "global": {
+                    "description": "structure to hold global settings for parameters in the network",
                     "type": "object",
                     "required": [
                         "unit_convention"
                     ],
                     "properties": {
                         "unit_convention": {
+                            "description": "units used for physical network parameters",
                             "type": "string",
                             "enum": [
                                         "NATURAL_UNITS",
@@ -39,19 +36,20 @@
                                     ]
                         },
                         "base_mva": {
-                            "$ref": "#/$defs/positive_number"
+                            "description": "[MVA] system-wide apparent power base",
+                            "$ref": "#/$defs/positive_number",
+                            "default": 100.0
                         },
                         "bus_ref": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/nonnegative_integer"
-                            }
+                            "description": "UID of reference bus of the electrical network",
+                            "$ref": "#/$defs/uid"
                         }
                     }
                 },
                 "area": {
                     "type": "array",
                     "items": {
+                        "description": "geographical subset of the electrical network with common Automatic Generation Control (AGC) and responsible for its Area Control Error (ACE)",
                         "type": "object",
                         "required": [
                             "uid",
@@ -62,21 +60,23 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "description": "binary indicator of whether area should be included or omitted (if omitted all elements within area should be omitted); 1=>included, 0=>omitted",
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "area name",
                                 "type": "string"
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional area parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "zone": {
                     "type": "array",
                     "items": {
+                        "description": "geographical subset of the electrical network commonly associated with market purposes (e.g., define sub-markets within a large interconnected system, defining different areas for reserve products, etc.)",
                         "type": "object",
                         "required": [
                             "uid",
@@ -87,21 +87,23 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "description": "binary indicator of whether zone should be included or omitted (if omitted all elements within zone should be omitted); 1=>included, 0=>omitted",
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "zone name",
                                 "type": "string"
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional zone parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "bus": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold bus data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -113,41 +115,47 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "bus name",
                                 "type": "string"
                             },
-                            "source_uid": {},
                             "base_kv": {
+                                "description": "bus base (nominal) voltage",
                                 "$ref": "#/$defs/positive_number"
                             },
                             "type": {
+                                "description": "bus type for power flow calculations (PV, PQ, or slack)",
                                 "anyOf": [
-                                    { "type": "integer", "minimum": 1, "maximum": 3 },
+                                    { "type": "string", "enum": ["PQ", "PV", "slack"] },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "vm_lb": {
+                                "description": "bus voltage lower bound",
                                 "anyOf": [
                                     { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "vm_ub": {
+                                "description": "bus voltage upper bound",
                                 "anyOf": [
                                     { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "area": {
+                                "description": "uid for area to which bus belongs to",
                                 "$ref": "#/$defs/uid"
                             },
                             "zone": {
+                                "description": "uid for zone to which bus belongs to",
                                 "$ref": "#/$defs/uid"
+                            },
+                            "source_uid": {
+                                "description": "additional bus parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -155,73 +163,78 @@
                 "load": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold load (consumer) data using ZIP model",
                         "type": "object",
                         "required": [
                             "uid",
                             "status",
                             "bus",
                             "pd",
-                            "qd",
-                            "pd_i",
-                            "qd_i",
-                            "pd_y",
-                            "qd_y"
+                            "qd"
                         ],
                         "properties": {
                             "uid": {
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "load name",
                                 "type": "string"
                             },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
-                            },
                             "bus": {
+                                "description": "uid of bus to which load is connected to",
                                 "$ref": "#/$defs/uid"
                             },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal power of load",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "pd": {
+                                "description": "active power demand",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qd": {
+                                "description": "reactive power demand",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pd_i": {
+                                "description": "constant current active power demand at v_bus = 1.0 pu",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qd_i": {
+                                "description": "constant current reactive power demand at v_bus = 1.0 pu",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pd_y": {
+                                "description": "constant impedance active power demand at v_bus = 1.0 pu",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qd_y": {
+                                "description": "constant impedance reactive power demand at v_bus = 1.0 pu",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
+                            },
+                            "source_uid": {
+                                "description": "additional bus parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -229,6 +242,7 @@
                 "shunt": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold shunt data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -243,38 +257,43 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "shunt name",
                                 "type": "string"
                             },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
-                            },
                             "bus": {
+                                "description": "uid of bus to which shunt is connected to",
                                 "$ref": "#/$defs/uid"
                             },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of shunt (nameplate capacity)",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "num_steps_ub": {
+                                "description": "upper bound for number of energized steps of shunt section (lower bound is always 0)",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_integer" },
                                     { "type": "array", "items": { "$ref": "#/$defs/nonnegative_integer" } }
                                 ]
                             },
                             "gs": {
+                                "description": "active power demand at v_bus = 1.0 pu, per step of each shunt section",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "type": "array", "items": { "$ref": "#/$defs/nonnegative_number" } }
                                 ]
                             },
                             "bs": {
+                                "description": "reactive power demand at v_bus = 1.0 pu, per step of each shunt section",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "type": "array", "items": { "type": "number" } }
                                 ]
+                            },
+                            "source_uid": {
+                                "description": "additional shunt parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -282,6 +301,7 @@
                 "gen": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold generator data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -293,161 +313,180 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "generator name",
                                 "type": "string"
                             },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
-                            },
                             "bus": {
+                                "description": "uid of bus to which generator is connected to",
                                 "$ref": "#/$defs/uid"
                             },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of generator (nameplate capacity)",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "vm_setpoint": {
+                                "description": "target voltage magnitude of the bus that this generator connects to",
                                 "anyOf": [
                                     { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pg_lb": {
+                                "description": "lower bound of active power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pg_ub": {
+                                "description": "upper bound of active power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qg_lb": {
+                                "description": "lower bound of reactive power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qg_ub": {
+                                "description": "upper bound of reactive power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "primary_source": {
+                                "description": "primary energy source",
                                 "type": "string",
                                 "enum": [
-                                            "COAL",
-                                            "OIL",
-                                            "GAS",
-                                            "NUCLEAR",
-                                            "BIOMASS",
-                                            "GEOTHERMAL",
-                                            "SOLAR",
-                                            "WIND",
-                                            "HYDRO",
-                                            "OTHER"
-                                        ]
+                                    "COAL",
+                                    "OIL",
+                                    "GAS",
+                                    "NUCLEAR",
+                                    "BIOMASS",
+                                    "GEOTHERMAL",
+                                    "SOLAR",
+                                    "WIND",
+                                    "HYDRO",
+                                    "OTHER"
+                                ]
                             },
                             "primary_source_subtype": {
+                                "description": "subtype of primary energy source; thermal classification taken from https://www.eia.gov/survey/form/eia_923/instructions.pdf",
                                 "type": "string",
                                 "enum": [
-                                            "ANTRHC_BITMN_COAL",
-                                            "WASTE_COAL",
-                                            "DISTILLATE_FUEL_OIL",
-                                            "WASTE_OIL",
-                                            "PETROLEUM_COKE",
-                                            "RESIDUAL_FUEL_OIL",
-                                            "NATURAL_GAS",
-                                            "OTHER_GAS",
-                                            "NUCLEAR",
-                                            "AG_BIPRODUCT",
-                                            "MUNICIPAL_WASTE",
-                                            "WOOD_WASTE",
-                                            "GEOTHERMAL",
-                                            "SOLAR_PV",
-                                            "SOLAR_CSP",
-                                            "WIND_ONSHORE",
-                                            "WIND_OFFSHORE",
-                                            "HYDRO_RUN_OF_THE_RIVER",
-                                            "HYDRO_DAM",
-                                            "HYDRO_PUMPED_STORAGE",
-                                            "OTHER"
-                                        ]
+                                    "ANTRHC_BITMN_COAL",
+                                    "WASTE_COAL",
+                                    "DISTILLATE_FUEL_OIL",
+                                    "WASTE_OIL",
+                                    "PETROLEUM_COKE",
+                                    "RESIDUAL_FUEL_OIL",
+                                    "NATURAL_GAS",
+                                    "OTHER_GAS",
+                                    "NUCLEAR",
+                                    "AG_BIPRODUCT",
+                                    "MUNICIPAL_WASTE",
+                                    "WOOD_WASTE",
+                                    "GEOTHERMAL",
+                                    "SOLAR_PV",
+                                    "SOLAR_CSP",
+                                    "WIND_ONSHORE",
+                                    "WIND_OFFSHORE",
+                                    "HYDRO_RUN_OF_THE_RIVER",
+                                    "HYDRO_DAM",
+                                    "HYDRO_PUMPED_STORAGE",
+                                    "OTHER"
+                                ]
                             },
                             "cost_pg_model": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 2
+                                "description": "type of generation cost model (i.e., function translating power/energy to money); POLYNOMIAL => cost_pg_parameters is an array with n+1 coefficients <a_i> for f(x) = a_0 + a_1 x^1 + ... + a_n x^n; PIECEWISE_LINEAR => cost_pg_parameters is a series of values <x_i, f_i> and cost (f) should be interpolated linearly in between points; MARGINAL_COST => cost_pg_parameters is a series of values <b_i, m_i>, where m_i is a marginal cost ($/MWh or $/(pu*h)) and b_i is the amoung of power (MWh or pu*h) sold at marginal cost m_i",
+                                "type": "string",
+                                "enum": [
+                                    "POLYNOMIAL",
+                                    "PIECEWISE_LINEAR",
+                                    "MARGINAL_COST"
+                                ]
                             },
                             "cost_pg_parameters": {
+                                "description": "parameters of generation cost function, can be time dependent",
                                 "anyOf": [
-                                    {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "number"
-                                        }
-                                    },
+                                    { "type": "array", "items": { "type": "number" } },
+                                    { "$ref": "#/$defs/xy_pairs" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "startup_cost_hot": {
+                                "description": "[$] cost of starting the unit after being off <= startup_time_hot hours",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "startup_cost_warm": {
+                                "description": "[$] cost of starting the unit after being off > startup_time_hot hours, but <= startup_time_warm hours",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "startup_cost_cold": {
+                                "description": "[$] cost of starting the unit after being off > startup_time_warm hours",
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "shutdown_cost" : {
+                                "description": "[$] cost of shutting down the unit",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "startup_time_hot": {
+                                "description": "[h] maximum time the unit can be off before a hot startup",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "startup_time_warm": {
-                                "$ref": "#/$defs/nonnegative_number"
-                            },
-                            "startup_time_cold": {
+                                "description": "[h] maximum time the unit can be off before a warm startup",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "in_service_time_ub": {
+                                "description": "[h] maximum time the unit can be in service (commitment == 1)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "in_service_time_lb": {
+                                "description": "[h] minimim time the unit can be in service (a.k.a., minimum up time)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "down_time_lb": {
+                                "description": "[h] minimim time the unit can be out of service (a.k.a., minimum down time)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "pg_delta_ub": {
+                                "description": "[MW/h or pu/h] maximum active power increase per hour",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "pg_delta_lb": {
+                                "description": "[MW/h or pu/h] maximum active power decrease per hour",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "service_required": {
+                                "description": "whether generator must be in service (e.g., nuclear power plant) or out of service (e.g., generator during maintenance or after an outage); 0 => no requirement, 1 => fixed in service, 2 => fixed out of service",
                                 "anyOf": [
                                     { "type": "integer", "minimum": 0, "maximum": 2},
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "shutdown_cost" : {
-                                "anyOf": [
-                                    { "type": "number" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                            "source_uid": {
+                                "description": "additional gen parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -455,6 +494,7 @@
                 "storage": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold storage (battery) data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -470,77 +510,92 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "storage name",
                                 "type": "string"
                             },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
-                            },
                             "bus": {
+                                "description": "uid of bus to which generator is connected to",
                                 "$ref": "#/$defs/uid"
                             },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of storage (nameplate capacity)",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "charge_efficiency": {
+                                "description": "[-] charge efficiency, in (0, 1]",
                                 "anyOf": [
-                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "discharge_efficiency": {
+                                "description": "[-] discharge efficiency, in (0, 1]",
                                 "anyOf": [
-                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "ps_ex": {
+                                "description": "converter standby active power exogenous draw",
                                 "type": "number"
                             },
                             "qs_ex": {
+                                "description": "converter standby reactive power exogenous draw",
                                 "type": "number"
                             },
                             "energy_ub": {
+                                "description": "[MWh or pu*h] maximum state of charge",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "charge_ub": {
+                                "description": "[MW or pu] maximum rate of charge",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "discharge_ub": {
+                                "description": "[MW or pu] maximum rate of discharge",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "sm_ub": {
+                                "description": "[MVA or pu] converter apparent power rating",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "cm_ub": {
+                                "description": "[kA or pu] converter current output rating",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "qs_lb": {
+                                "description": "[MVAr or pu] minumum reactive power injection",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qs_ub": {
+                                "description": "[MVAr or pu] maximum reactive power injection",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "ps_delta_ub": {
+                                "description": "[MW/h or pu/h] maximum active power increase per hour",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "ps_delta_lb": {
+                                "description": "[MW/h or pu/h] maximum active power decrease per hour",
                                 "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "source_uid": {
+                                "description": "additional storage parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -560,29 +615,34 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
+                                "$ref": "#/$defs/status"
                             },
                             "bus_fr": {
+                                "description": "uid of bus at the from terminal of switch",
                                 "$ref": "#/$defs/uid"
                             },
                             "bus_to": {
+                                "description": "uid of bus at the to terminal of switch",
                                 "$ref": "#/$defs/uid"
                             },
+                            "name": {
+                                "description": "name of switch",
+                                "type": "string"
+                            },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of switch (nameplate capacity)",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "sm_ub": {
+                                "description": "[MVA or pu] apparent power flow limit",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "cm_ub": {
+                                "description": "[kA or pu] current limit",
                                 "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "source_uid": {
+                                "description": "additional switch parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -590,6 +650,7 @@
                 "ac_line": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold ac line data using concentrated (6-parameter circuit) PI model",
                         "type": "object",
                         "required": [
                             "uid",
@@ -597,94 +658,111 @@
                             "bus_fr",
                             "bus_to",
                             "r",
-                            "x",
-                            "g_fr",
-                            "b_fr",
-                            "g_to",
-                            "b_to"
+                            "x"
                         ],
                         "properties": {
                             "uid": {
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
+                                "$ref": "#/$defs/status"
                             },
                             "bus_fr": {
+                                "description": "uid of bus at the from terminal of ac line",
                                 "$ref": "#/$defs/uid"
                             },
                             "bus_to": {
+                                "description": "uid of bus at the to terminal of ac line",
                                 "$ref": "#/$defs/uid"
                             },
+                            "name": {
+                                "description": "line name",
+                                "type": "string"
+                            },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of ac line",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "r": {
+                                "description": "[Ohm or pu] series resistance of line",
                                 "type": "number"
                             },
                             "x": {
+                                "description": "[Ohm or pu] series impedance of line",
                                 "type": "number"
                             },
                             "g_fr": {
-                                "type": "number"
+                                "description": "[S or pu] shunt conductance of line at from terminal",
+                                "type": "number",
+                                "default": 0
                             },
                             "b_fr": {
-                                "type": "number"
+                                "description": "[S or pu] shunt susceptance of line at from terminal",
+                                "type": "number",
+                                "default": 0
                             },
                             "g_to": {
-                                "type": "number"
+                                "description": "[S or pu] shunt conductance of line at to terminal",
+                                "type": "number",
+                                "default": 0
                             },
                             "b_to": {
-                                "type": "number"
+                                "description": "[S or pu] shunt susceptance of line at to terminal",
+                                "type": "number",
+                                "default": 0
                             },
                             "sm_ub_a": {
+                                "description": "[MVA or pu] persistent apparent power rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "sm_ub_b": {
+                                "description": "[MVA or pu] 4-hour apparent power rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "sm_ub_c": {
+                                "description": "[MVA or pu] 15-minute apparent power rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "cm_ub_a": {
+                                "description": "[kA or pu] persistent current rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "cm_ub_b": {
+                                "description": "[kA or pu] 4-hour current rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "cm_ub_c": {
+                                "description": "[kA or pu] 15-minute current rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "vad_lb": {
+                                "description": "[degree] voltage angle difference lower bound (stability)",
                                 "type": "number"
                             },
                             "vad_ub": {
+                                "description": "[degree] voltage angle difference upper bound (stability)",
                                 "type": "number"
+                            },
+                            "source_uid": {
+                                "description": "additional ac line parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -692,6 +770,7 @@
                 "transformer": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold 2-winding transformer and phase shifter data using simplified (4-parameter circuit) model",
                         "type": "object",
                         "required": [
                             "uid",
@@ -708,89 +787,114 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
+                                "$ref": "#/$defs/status"
                             },
                             "bus_fr": {
+                                "description": "uid of bus at the from terminal of transformer",
                                 "$ref": "#/$defs/uid"
                             },
                             "bus_to": {
+                                "description": "uid of bus at the to terminal of transformer",
                                 "$ref": "#/$defs/uid"
                             },
+                            "name": {
+                                "description": "transformer name",
+                                "type": "string"
+                            },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of transformer",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "r": {
+                                "description": "[Ohm or pu] series resistance of line",
                                 "type": "number"
                             },
                             "x": {
+                                "description": "[Ohm or pu] series impedance of line",
                                 "type": "number"
                             },
                             "g": {
+                                "description": "[S or pu] shunt conductance of transformer at from terminal (magnetizing branch)",
                                 "type": "number"
                             },
                             "b": {
+                                "description": "[S or pu] shunt susceptance of transformer at from terminal (magnetizing branch)",
                                 "type": "number"
                             },
                             "tm_lb": {
-                                "$ref": "#/$defs/positive_number"
+                                "description": "[-] minimum tap ratio (1.0 correspond to nominal ratio, inner_vm_from = vm_from * tap_value)",
+                                "$ref": "#/$defs/positive_number",
+                                "default": 1.0
                             },
                             "tm_ub": {
-                                "$ref": "#/$defs/positive_number"
+                                "description": "[-] maximum tap ratio (1.0 correspond to nominal ratio, inner_vm_from = vm_from * tap_value)",
+                                "$ref": "#/$defs/positive_number",
+                                "default": 1.0
                             },
                             "tm_steps":{
-                                "$ref": "#/$defs/positive_integer"
+                                "description": "number of discrete steps between tm_lb and tm_ub (including limit values)",
+                                "$ref": "#/$defs/positive_integer",
+                                "default": 1
                             },
                             "ta_lb": {
-                                "type": "number"
+                                "description": "[-] minimum angle phase shift (angle difference = va_from - va_to - angle_shift)",
+                                "type": "number",
+                                "default": 0
                             },
                             "ta_ub": {
-                                "type": "number"
+                                "description": "[-] maximum angle phase shift (angle difference = va_from - va_to - angle_shift)",
+                                "type": "number",
+                                "default": 0
                             },
                             "ta_steps":{
-                                "$ref": "#/$defs/positive_integer"
+                                "description": "number of discrete steps between ta_lb and ta_ub (including limit values)",
+                                "$ref": "#/$defs/positive_integer",
+                                "default": 1
                             },
                             "sm_ub_a": {
+                                "description": "[MVA or pu] persistent apparent power rating, referred to from side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "sm_ub_b": {
+                                "description": "[MVA or pu] 4-hour apparent power rating, referred to from side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "sm_ub_c": {
+                                "description": "[MVA or pu] 15-minute apparent power rating, referred to from side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "cm_ub_a": {
+                                "description": "[kA or pu] persistent current rating, referred to from side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "cm_ub_b": {
+                                "description": "[kA or pu] 4-hour current rating, referred to from side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "cm_ub_c": {
+                                "description": "[kA or pu] 15-minute current rating, referred to from side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
+                            },
+                            "source_uid": {
+                                "description": "additional transformer parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -798,138 +902,171 @@
                 "hvdc_p2p": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold point-to-point hvdc line data",
                         "type": "object",
                         "required": [
                             "uid",
                             "status",
                             "bus_fr",
-                            "bus_to",
-                            "r",
-                            "p",
-                            "technology",
-                            "loss_a",
-                            "loss_b",
-                            "loss_c"
+                            "bus_to"
                         ],
                         "properties": {
                             "uid": {
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "source_uid": {},
-                            "nominal_mva": {
-                                "$ref": "#/$defs/positive_number"
+                                "$ref": "#/$defs/status"
                             },
                             "bus_fr": {
+                                "description": "uid of bus at the from terminal of hvdc line",
                                 "$ref": "#/$defs/uid"
                             },
                             "bus_to": {
+                                "description": "uid of bus at the to terminal of hvdc line",
                                 "$ref": "#/$defs/uid"
                             },
+                            "name": {
+                                "description": "HVDC line name",
+                                "type": "string"
+                            },
+                            "nominal_mva": {
+                                "description": "[MVA] nominal apparent power of hvdc line",
+                                "$ref": "#/$defs/positive_number"
+                            },
                             "base_kv_dc": {
+                                "description": "[kV] base voltage at the dc side",
                                 "$ref": "#/$defs/positive_number"
                             },
                             "vm_dc_lb": {
+                                "description": "[kV or pu] minimum voltage at the dc side",
                                 "$ref": "#/$defs/positive_number"
                             },
                             "vm_dc_ub": {
+                                "description": "[kV or pu] maximum voltage at the dc side",
                                 "$ref": "#/$defs/positive_number"
                             },
                             "pdc_fr_lb": {
+                                "description": "[MW or pu] minimum active power entering hvdc line at from bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qdc_fr_lb": {
+                                "description": "[MVAr or pu] minimum reactive power entering hvdc line at from bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pdc_fr_ub": {
+                                "description": "[MW or pu] maximum active power entering hvdc line at from bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qdc_fr_ub": {
+                                "description": "[MVAr or pu] maximum reactive power entering hvdc line at from bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pdc_to_lb": {
+                                "description": "[MW or pu] minimum active power entering hvdc line at to bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qdc_to_lb": {
+                                "description": "[MVAr or pu] minimum reactive power entering hvdc line at to bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pdc_to_ub": {
+                                "description": "[MW or pu] maximum active power entering hvdc line at to bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qdc_to_ub": {
+                                "description": "[MW or pu] maximum active power entering hvdc line at to bus",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "r": {
-                                "$ref": "#/$defs/nonnegative_number"
+                                "description": "[Ohm or pu] dc line resistance (if in pu, base voltage corresponds to base_kv_dc)",
+                                "$ref": "#/$defs/nonnegative_number",
+                                "default": 0.0
                             },
                             "p": {
+                                "description": "number of poles; 1 => monopole, 2 => bipole",
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 2
                             },
                             "technology": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3
+                                "description": "power conversion technology",
+                                "type": "string",
+                                "enum": [
+                                    "LCC",
+                                    "VSC",
+                                    "MMC"
+                                ]
                             },
                             "loss_a": {
-                                "$ref": "#/$defs/nonnegative_number"
+                                "description": "[MW or pu] standby loss",
+                                "$ref": "#/$defs/nonnegative_number",
+                                "default": 0
                             },
                             "loss_b": {
-                                "$ref": "#/$defs/nonnegative_number"
+                                "description": "[kV or pu] loss proportional to current magnitude (if in pu, base voltage corresponds to base_kv_dc)",
+                                "$ref": "#/$defs/nonnegative_number",
+                                "default": 0
                             },
                             "loss_c": {
-                                "$ref": "#/$defs/nonnegative_number"
+                                "description": "[Ohm or pu] loss proportional to current magnitude squared (if in pu, base voltage corresponds to base_kv_dc)",
+                                "$ref": "#/$defs/nonnegative_number",
+                                "default": 0
                             },
                             "sm_ub": {
+                                "description": "[MVA or pu] ac persistent apparent power rating",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "cm_ub": {
+                            "cm_ub_fr": {
+                                "description": "[kA or pu] ac persistent current rating, from terminal (if in pu, use from bus base_kv)",
+                                "anyOf": [
+                                    { "$ref": "#/$defs/nonnegative_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "cm_ub_fr": {
+                                "description": "[kA or pu] ac persistent current rating, to terminal (if in pu, use to bus base_kv)",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "phi_lb": {
+                                "description": "[degrees] only meaningful if technology == LCC; firing angle minimum",
                                 "type": "number"
                             },
                             "phi_ub": {
+                                "description": "[degrees] only meaningful if technology == LCC; firing angle maximum",
                                 "type": "number"
+                            },
+                            "source_uid": {
+                                "description": "additional hvdc point-to-point parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -937,6 +1074,7 @@
                 "reserve": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold reserve product and requirement data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -948,37 +1086,43 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "status": {
-                                "anyOf": [
-                                    { "$ref": "#/$defs/binary" },
-                                    { "$ref": "#/$defs/time_series_reference" }
-                                ]
+                                "$ref": "#/$defs/status"
                             },
                             "name": {
+                                "description": "name of reserve product",
                                 "type": "string"
                             },
-                            "source_uid": {},
                             "reserve_type": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3
+                                "type": "string",
+                                "enum": [
+                                    "PRIMARY",
+                                    "SECONDARY",
+                                    "TERTIARY"
+                                ]
                             },
                             "participants": {
+                                "description": "uid of generators contributing to this reserve",
                                 "type": "array",
                                 "items": {
                                     "$ref": "#/$defs/uid"
                                 }
                             },
-                            "pg_lb": {
+                            "pg_up": {
+                                "description": "[MW or pu] upward active power required by this reserve",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "pg_ub": {
+                            "pg_down": {
+                                "description": "[MW or pu] downward active power required by this reserve",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
+                            },
+                            "source_uid": {
+                                "description": "additional reserve parameters currently not supported by CTM"
                             }
                         }
                     }
@@ -1116,11 +1260,31 @@
             "type": "number",
             "exclusiveMinimum" : 0
         },
+        "binary": {
+            "description": "binary indicator of whether component should be included or omitted; 1=>included, 0=>omitted",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+        },
         "uid": {
+            "description": "object's Unique Identifier",
             "anyOf": [
                 { "type": "integer", "minimum": 0 },
                 { "type": "string" }
             ]
+        },
+        "xy_pairs": {
+            "description": "pairs of data points saved as two vectors (of the same length)",
+            "type": "object",
+            "required": [
+                "x",
+                "y"
+            ],
+            "properties": {
+                "x": { "type": "array", "items": { "type": "number" } },
+                "y": { "type": "array", "items": { "type": "number" } }
+                }
+            }
         },
         "time_series_reference" : {
             "type": "object",
