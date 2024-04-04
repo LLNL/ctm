@@ -1,11 +1,13 @@
 {
     "$schema": "http://json-schema.org/schema#",
+    "title": "Common Transmission Model (CTM) Solution Schema",
     "type": "object",
     "required": [
         "solution"
     ],
     "properties": {
         "solution": {
+            "description": "structure to hold persistent solution data",
             "type": "object",
             "required": [
                 "global",
@@ -15,12 +17,14 @@
             ],
             "properties": {
                 "global": {
+                    "description": "structure to hold global settings for parameters in the network",
                     "type": "object",
                     "required": [
                         "unit_convention"
                     ],
                     "properties": {
                         "unit_convention": {
+                            "description": "units used for physical network parameters",
                             "type": "string",
                             "enum": [
                                         "NATURAL_UNITS",
@@ -29,13 +33,16 @@
                                     ]
                         },
                         "base_mva": {
-                            "$ref": "#/$defs/positive_number"
+                            "description": "[MVA] system-wide apparent power base",
+                            "$ref": "#/$defs/positive_number",
+                            "default": 100.0
                         }
                     }
                 },
                 "bus": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold bus solution data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -46,48 +53,57 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "vm": {
+                                "description": "[kV or pu] voltage magnitude",
                                 "anyOf": [
                                     { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "va": {
+                                "description": "[deg] voltage magnitude",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "p_imbalance": {
+                                "description": "[MW or pu] signed power imbalance; positive indicates active load loss",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "q_imbalance": {
+                                "description": "[MVAr or pu] signed power imbalance; positive indicates reactive load loss",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "p_lambda": {
+                                "description": "[$/MW or $/pu] dual of active power balance constraints",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "q_lambda": {
+                                "description": "[$/MVAr or $/pu] dual of reactive power balance constraints",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional bus parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "shunt": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold shunt solution data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -98,19 +114,23 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "num_steps": {
+                                "description": "number of energized steps of shunt section (lower bound is always 0)",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_integer" },
                                     { "type": "array", "items": { "$ref": "#/$defs/nonnegative_integer" } },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional shunt parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "gen": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold generator solution data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -121,30 +141,58 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "pg": {
+                                "description": "[MW or pu] active power injection",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qg": {
+                                "description": "[MVAr or pu] reactive power injection",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "in_service": {
+                                "description": "commitment binary indicator; 0=>unit is turned off, 1=>unit is online",
                                 "anyOf": [
                                     { "$ref": "#/$defs/binary" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "reserve_provision": {
+                                "type": "array",
+                                "items": {
+                                    "description": "structure to hold reserve provision to a single reserve product",
+                                    "type": "object",
+                                    "required": [
+                                        "uid",
+                                        "rg"
+                                    ],
+                                    "uid": {
+                                        "description": "uid of reserve product rg contributes to",
+                                        "$ref": "#/$defs/uid"
+                                    },
+                                    "rg" : {
+                                        "description": "[MW or pu] contribution to reserve",
+                                        "anyOf": [
+                                            { "$ref": "#/$defs/nonnegative_number" },
+                                            { "$ref": "#/$defs/time_series_reference" }
+                                        ]
+                                    }
+                                }
+                            },
+                            "source_uid": {
+                                "description": "additional generator parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "storage": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold storage (battery) solution data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -156,42 +204,50 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "ps": {
+                                "description": "[MW or pu] active power injection",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qs": {
+                                "description": "[MW or pu] reactive power injection",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "energy": {
+                                "description": "[MWh or pu*h] state of charge",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "charge": {
+                                "description": "[MW or pu] rate of charge",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "discharge": {
+                                "description": "[MW or pu] rate of discharge",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional storage parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "switch": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold switch solution data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -202,30 +258,36 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "psw_fr": {
+                                "description": "[MW or pu] active power entering the switch at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qsw_fr": {
+                                "description": "[MVAr or pu] reactive power entering the switch at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "state": {
+                                "description": "binary indicator of switch state; 0=>open, 1=>closed",
                                 "anyOf": [
                                     { "$ref": "#/$defs/binary" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional switch parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "ac_line": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold switch solution data",
                         "type": "object",
                         "required": [
                             "uid"
@@ -235,30 +297,36 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "pl_fr": {
+                                "description": "[MW or pu] active power entering the ac line at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "ql_fr": {
+                                "description": "[MVAr or pu] reactive power entering the ac line at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pl_to": {
+                                "description": "[MVAr or pu] active power entering the ac line at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "ql_to": {
+                                "description": "[MVAr or pu] reactive power entering the ac line at its to terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional switch parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
@@ -266,6 +334,7 @@
                     "type": "array",
                     "items": {
                         "type": "object",
+                        "description": "structure to hold 2-winding transformer solution data",
                         "required": [
                             "uid"
                         ],
@@ -274,48 +343,57 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "tm": {
+                                "description": "[-] tap ratio",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "ta": {
+                                "description": "[deg] angle phase shift",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pt_fr": {
+                                "description": "[MW or pu] active power entering the transformer at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qt_fr": {
+                                "description": "[MVAr or pu] reactive power entering the transformer at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pt_to": {
+                                "description": "[MW or pu] active power entering the transformer at its to terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qt_to": {
+                                "description": "[MVAr or pu] reactive power entering the transformer at its to terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional 2-winding transformer parameters currently not supported by CTM"
+                            }
                         }
                     }
                 },
                 "hvdc_p2p": {
                     "type": "array",
                     "items": {
+                        "description": "structure to hold point-to-point hvdc line solution data",
                         "type": "object",
                         "required": [
                             "uid",
@@ -327,112 +405,160 @@
                                 "$ref": "#/$defs/uid"
                             },
                             "vm_dc": {
+                                "description": "[kV or pu] voltage at the dc side",
                                 "anyOf": [
                                     { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pdc_fr": {
+                                "description": "[MW or pu] active power entering the hvdc line at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qdc_fr": {
+                                "description": "[MVAr or pu] reactive power entering the hvdc line at its from terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pdc_to": {
+                                "description": "[MW or pu] active power entering the hvdc line at its to terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qdc_to": {
+                                "description": "[MVAr or pu] reactive power entering the hvdc line at its to terminal",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {}
+                            "source_uid": {
+                                "description": "additional hvdc point-to-point parameters currently not supported by CTM"
+                            }
+                        }
+                    }
+                },
+                "reserve": {
+                    "type": "array",
+                    "items": {
+                        "description": "structure to hold reserve product solution data",
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "shortfall"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "shortfall": {
+                                "description": "[MW or pu] shortfall on reserve product",
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "source_uid": {
+                                "description": "additional reserve parameters currently not supported by CTM"
+                            }
                         }
                     }
                 }
             }
         },
         "time_series_data": {
+            "description": "structure to contain all time variant data of the system/case. All time series are synchronized to the same timestamps, which should should be stored using Unix time. Structure is quasi-tabular, with uid, name, path_to_file, values, and source_uid being arrays in the same order of said field. This is done in order to allow for better compression (e.g., using HDF5) for the values field.",
             "type": "object",
             "required": [
                 "uid"
             ],
             "properties": {
+                "timestamp": {
+                    "description": "[seconds] seconds since epoch (Unix time) for each instant for which time series values are provided",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/nonnegative_number"
+                    }
+                },
                 "uid": {
+                    "description": "array of uids of time series",
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/uid"
                     }
                 },
                 "name": {
+                    "description": "array of names of time series",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "source_uid": {
-                    "type": "array"
-                },
                 "path_to_file": {
+                    "description": "path to file containing all time series information or a separate path for each time series",
                     "anyOf": [
                         { "type": "string"},
                         { "type": "array", "items": { "type": "string" } }
                     ]
                 },
-                "timestamp": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/nonnegative_integer"
-                    }
-                },
                 "values": {
+                    "description": "array of time series values",
                     "type": "array",
                     "items": {
+                        "description": "time series values for a particular time series",
                         "type": "array"
                     }
+                },
+                "source_uid": {
+                    "description": "additional time series information not currently supported by CTM",
+                    "type": "array"
                 }
             }
         }
     },
     "$defs": {
         "binary": {
+            "description": "binary",
             "type": "integer",
             "minimum": 0,
             "maximum": 1
         },
         "nonnegative_integer": {
+            "description": "nonnegative integer number",
             "type": "integer",
             "minimum" : 0
         },
         "nonnegative_number": {
+            "description": "nonnegative real number",
             "type": "number",
             "minimum" : 0
         },
         "positive_integer": {
+            "description": "positive integer number",
             "type": "integer",
             "exclusiveMinimum" : 0
         },
         "positive_number": {
+            "description": "positive real number",
             "type": "number",
             "exclusiveMinimum" : 0
         },
         "uid": {
+            "description": "object's Unique IDentifier",
             "anyOf": [
                 { "type": "integer", "minimum": 0 },
                 { "type": "string" }
             ]
         },
         "time_series_reference" : {
+            "description": "structure to hold a reference (possibly, to be scaled) to a time series",
             "type": "object",
             "required": [
                 "uid",
@@ -440,12 +566,14 @@
             ],
             "properties": {
                 "uid": {
+                    "description": "uid of time series (in time_series_data) this reference points to",
                     "anyOf" : [
                         { "type": "integer", "minimum": 0 },
                         { "type": "string" }
                     ]
                 },
                 "scale_factor": {
+                    "description": "[-] scale factor to be applied to the pointed-to time series to obtain this field's values",
                     "type": "number"
                 }
             }

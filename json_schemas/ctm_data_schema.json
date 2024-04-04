@@ -279,14 +279,14 @@
                                 ]
                             },
                             "gs": {
-                                "description": "active power demand at v_bus = 1.0 pu, per step of each shunt section",
+                                "description": "[MW or pu] active power demand at v_bus = 1.0 pu, per step of each shunt section",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "type": "array", "items": { "$ref": "#/$defs/nonnegative_number" } }
                                 ]
                             },
                             "bs": {
-                                "description": "reactive power demand at v_bus = 1.0 pu, per step of each shunt section",
+                                "description": "[MVAr or pu] reactive power demand at v_bus = 1.0 pu, per step of each shunt section",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "type": "array", "items": { "type": "number" } }
@@ -328,35 +328,35 @@
                                 "$ref": "#/$defs/positive_number"
                             },
                             "vm_setpoint": {
-                                "description": "target voltage magnitude of the bus that this generator connects to",
+                                "description": "[kV or pu] target voltage magnitude of the bus that this generator connects to",
                                 "anyOf": [
                                     { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pg_lb": {
-                                "description": "lower bound of active power injection (rectangular operating zone)",
+                                "description": "[MW or pu] lower bound of active power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "pg_ub": {
-                                "description": "upper bound of active power injection (rectangular operating zone)",
+                                "description": "[MW or pu] upper bound of active power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qg_lb": {
-                                "description": "lower bound of reactive power injection (rectangular operating zone)",
+                                "description": "[MVAr or pu] lower bound of reactive power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
                             "qg_ub": {
-                                "description": "upper bound of reactive power injection (rectangular operating zone)",
+                                "description": "[MVAr or pu] upper bound of reactive power injection (rectangular operating zone)",
                                 "anyOf": [
                                     { "type": "number" },
                                     { "$ref": "#/$defs/time_series_reference" }
@@ -754,11 +754,11 @@
                                 ]
                             },
                             "vad_lb": {
-                                "description": "[degree] voltage angle difference lower bound (stability)",
+                                "description": "[deg] voltage angle difference lower bound (stability)",
                                 "type": "number"
                             },
                             "vad_ub": {
-                                "description": "[degree] voltage angle difference upper bound (stability)",
+                                "description": "[deg] voltage angle difference upper bound (stability)",
                                 "type": "number"
                             },
                             "source_uid": {
@@ -837,12 +837,12 @@
                                 "default": 1
                             },
                             "ta_lb": {
-                                "description": "[-] minimum angle phase shift (angle difference = va_from - va_to - angle_shift)",
+                                "description": "[deg] minimum angle phase shift (angle difference = va_from - va_to - angle_shift)",
                                 "type": "number",
                                 "default": 0
                             },
                             "ta_ub": {
-                                "description": "[-] maximum angle phase shift (angle difference = va_from - va_to - angle_shift)",
+                                "description": "[deg] maximum angle phase shift (angle difference = va_from - va_to - angle_shift)",
                                 "type": "number",
                                 "default": 0
                             },
@@ -1058,11 +1058,11 @@
                                 ]
                             },
                             "phi_lb": {
-                                "description": "[degrees] only meaningful if technology == LCC; firing angle minimum",
+                                "description": "[deg] only meaningful if technology == LCC; firing angle minimum",
                                 "type": "number"
                             },
                             "phi_ub": {
-                                "description": "[degrees] only meaningful if technology == LCC; firing angle maximum",
+                                "description": "[deg] only meaningful if technology == LCC; firing angle maximum",
                                 "type": "number"
                             },
                             "source_uid": {
@@ -1167,7 +1167,7 @@
                                 "$ref": "#/$defs/positive_number"
                             },
                             "va": {
-                                "description": "[degrees] initial voltage angle",
+                                "description": "[deg] initial voltage angle",
                                 "type": "number"
                             },
                             "source_uid": {
@@ -1313,7 +1313,7 @@
                                 "$ref": "#/$defs/positive_number"
                             },
                             "ta": {
-                                "description": "[degrees] initial angle phase shift",
+                                "description": "[deg] initial angle phase shift",
                                 "type": "number"
                             },
                             "source_uid": {
@@ -1447,7 +1447,7 @@
             "exclusiveMinimum" : 0
         },
         "uid": {
-            "description": "object's Unique Identifier",
+            "description": "object's Unique IDentifier",
             "anyOf": [
                 { "type": "integer", "minimum": 0 },
                 { "type": "string" }
