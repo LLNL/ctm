@@ -1143,8 +1143,8 @@
                         "time_elapsed"
                     ],
                     "properties": {
-                        "description": "[seconds] time elapsed since temporal_boundary conditions where present in the system",
                         "time_elapsed": {
+                            "description": "[seconds] time elapsed since temporal_boundary conditions where present in the system",
                             "$ref": "#/$defs/nonnegative_number"
                         }
                     }
@@ -1469,7 +1469,6 @@
             "properties": {
                 "x": { "type": "array", "items": { "type": "number" } },
                 "y": { "type": "array", "items": { "type": "number" } }
-                }
             }
         },
         "time_series_reference" : {
