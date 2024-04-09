@@ -485,6 +485,26 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
+                            "forced_outage_rate": {
+                                "description": "[-] fraction of time the generator is out of service because of forced outages (i.e., hours out of service---because of failures---during a year, divided by 8760)",
+                                "type": "number",
+                                "minumum": 0,
+                                "maximum": 1
+                            },
+                            "mean_time_to_failure": {
+                                "description": "[h] mean time to occurence of a failure; failures can be assumed to follow a Poisson process",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "mean_time_to_repair": {
+                                "description": "[h] mean time to repair a failure",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "scheduled_maintenance_rate": {
+                                "description": "[-] fraction of time the generator is out of service because of scheduled maintenance (i.e., hours out of service---because of scheduled maintenance---during a year, divided by 8760)",
+                                "type": "number",
+                                "minumum": 0,
+                                "maximum": 1
+                            },
                             "source_uid": {
                                 "description": "additional gen parameters currently not supported by CTM"
                             }
@@ -761,6 +781,18 @@
                                 "description": "[deg] voltage angle difference upper bound (stability)",
                                 "type": "number"
                             },
+                            "transient_outage_rate": {
+                                "description": "[year^-1] number of expected transient outages per year (outages cleared by reconnectors)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "persistent_outage_rate": {
+                                "description": "[year^-1] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "persistent_outage_duration": {
+                                "description": "[hours] expected duration of persistent outage (time between outage and crews re-energizing the branch)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
                             "source_uid": {
                                 "description": "additional ac line parameters currently not supported by CTM"
                             }
@@ -892,6 +924,14 @@
                                     { "$ref": "#/$defs/nonnegative_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
+                            },
+                            "persistent_outage_rate": {
+                                "description": "[year^-1] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "persistent_outage_duration": {
+                                "description": "[hours] expected duration of persistent outage (time between outage and crews re-energizing the branch)",
+                                "$ref": "#/$defs/nonnegative_number"
                             },
                             "source_uid": {
                                 "description": "additional transformer parameters currently not supported by CTM"
@@ -1064,6 +1104,18 @@
                             "phi_ub": {
                                 "description": "[deg] only meaningful if technology == LCC; firing angle maximum",
                                 "type": "number"
+                            },
+                            "transient_outage_rate": {
+                                "description": "[year^-1] number of expected transient outages per year (outages cleared by reconnectors or other)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "persistent_outage_rate": {
+                                "description": "[year^-1] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "persistent_outage_duration": {
+                                "description": "[hours] expected duration of persistent outage (time between outage and crews re-energizing the branch)",
+                                "$ref": "#/$defs/nonnegative_number"
                             },
                             "source_uid": {
                                 "description": "additional hvdc point-to-point parameters currently not supported by CTM"
