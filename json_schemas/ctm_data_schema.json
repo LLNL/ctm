@@ -1,12 +1,17 @@
 {
     "$schema": "http://json-schema.org/schema#",
-    "title": "Common Transmission Model (CTM) Data Schema",
+    "title": "Common Transmission Model (CTM) Data Schema v0.1",
     "type": "object",
     "required": [
+        "ctm_version",
         "network",
         "temporal_boundary"
     ],
     "properties": {
+        "ctm_version": {
+            "description": "release version of CTM specification",
+            "type": "string"
+        },
         "network": {
             "description": "structure to hold persistent network data",
             "type": "object",

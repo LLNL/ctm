@@ -1,11 +1,16 @@
 {
     "$schema": "http://json-schema.org/schema#",
-    "title": "Common Transmission Model (CTM) Solution Schema",
+    "title": "Common Transmission Model (CTM) Solution Schema v0.1",
     "type": "object",
     "required": [
+        "ctm_version",
         "solution"
     ],
     "properties": {
+        "ctm_version": {
+            "description": "release version of CTM specification",
+            "type": "string"
+        },
         "solution": {
             "description": "structure to hold persistent solution data",
             "type": "object",
