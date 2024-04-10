@@ -94,7 +94,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional bus parameters currently not supported by CTM"
                             }
                         }
@@ -121,7 +121,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional shunt parameters currently not supported by CTM"
                             }
                         }
@@ -183,7 +183,7 @@
                                     }
                                 }
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional generator parameters currently not supported by CTM"
                             }
                         }
@@ -238,7 +238,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional storage parameters currently not supported by CTM"
                             }
                         }
@@ -278,7 +278,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional switch parameters currently not supported by CTM"
                             }
                         }
@@ -324,7 +324,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional switch parameters currently not supported by CTM"
                             }
                         }
@@ -384,7 +384,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional 2-winding transformer parameters currently not supported by CTM"
                             }
                         }
@@ -439,7 +439,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional hvdc point-to-point parameters currently not supported by CTM"
                             }
                         }
@@ -465,7 +465,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "source_uid": {
+                            "ext": {
                                 "description": "additional reserve parameters currently not supported by CTM"
                             }
                         }
@@ -474,7 +474,7 @@
             }
         },
         "time_series_data": {
-            "description": "structure to contain all time variant data of the system/case. All time series are synchronized to the same timestamps, which should should be stored using Unix time. Structure is quasi-tabular, with uid, name, path_to_file, values, and source_uid being arrays in the same order of said field. This is done in order to allow for better compression (e.g., using HDF5) for the values field.",
+            "description": "structure to contain all time variant data of the system/case. All time series are synchronized to the same timestamps, which should should be stored using Unix time. Structure is quasi-tabular, with uid, name, path_to_file, values, and ext being arrays in the same order of said field. This is done in order to allow for better compression (e.g., using HDF5) for the values field.",
             "type": "object",
             "required": [
                 "uid"
@@ -516,7 +516,7 @@
                         "type": "array"
                     }
                 },
-                "source_uid": {
+                "ext": {
                     "description": "additional time series information not currently supported by CTM",
                     "type": "array"
                 }
