@@ -1,6 +1,7 @@
 {
     "$schema": "http://json-schema.org/schema#",
-    "title": "Common Transmission Model (CTM) Time Series Data Schema",
+    "title": "CTM Time Series Data",
+    "description": "Common Transmission Model (CTM) Time Series Data Schema v0.1",
     "type": "object",
     "required": [
         "ctm_version",

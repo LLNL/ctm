@@ -1,6 +1,7 @@
 {
     "$schema": "http://json-schema.org/schema#",
-    "title": "Common Transmission Model (CTM) Data Schema v0.1",
+    "title": "CTM Data",
+    "description": "Common Transmission Model (CTM) Data Schema v0.1",
     "type": "object",
     "required": [
         "ctm_version",
