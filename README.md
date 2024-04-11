@@ -13,5 +13,15 @@ multiple advantages over existing data formats, both open and closed.
   these classes is to parse and manage CTM datasets in multiple programming languages.
 * `examples`: contains example datasets in CTM JSON format.
 
+## Task to complete before sending for code review
+
+* **Add additional parameters for PF/OPF to RTS-GMLC system.**
+* Add RTS unit commitment cases with solutions from EGRET.
+* Update and port EGRET interface.
+* Create HTTP documentation using: https://coveooss.github.io/json-schema-for-humans/
+* Create MD files with explanations in each folder.
+
+These tasks need to be completed by 2024-04-12. Then, write report for IEEE.
+
 ## Author
 Ignacio Aravena, aravenasolis1@llnl.gov.
