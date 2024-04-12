@@ -15,10 +15,10 @@ multiple advantages over existing data formats, both open and closed.
 
 ## Task to complete before sending for code review
 
-* [DONE] Add additional parameters for PF/OPF to RTS-GMLC system.
-* Add RTS unit commitment cases with solutions from EGRET.
+* <del>Add additional parameters for PF/OPF to RTS-GMLC system</del>
+* **Add RTS unit commitment cases with solutions from EGRET.**
 * Update and port EGRET interface.
-* [Current] Create HTTP documentation using: https://coveooss.github.io/json-schema-for-humans/
+* <del>Create HTTP documentation using: https://coveooss.github.io/json-schema-for-humans/</del>
 * Create MD files with explanations in each folder.
 
 These tasks need to be completed by 2024-04-12. Then, write report for IEEE.

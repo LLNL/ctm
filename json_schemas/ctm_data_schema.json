@@ -788,11 +788,11 @@
                                 "type": "number"
                             },
                             "transient_outage_rate": {
-                                "description": "[year^-1] number of expected transient outages per year (outages cleared by reconnectors)",
+                                "description": "[events/year] number of expected transient outages per year (outages cleared by reconnectors)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "persistent_outage_rate": {
-                                "description": "[year^-1] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "description": "[events/year] number of expected persistent outages per year (outages not cleared by reconnectors)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "persistent_outage_duration": {
@@ -932,7 +932,7 @@
                                 ]
                             },
                             "persistent_outage_rate": {
-                                "description": "[year^-1] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "description": "[events/year] number of expected persistent outages per year (outages not cleared by reconnectors)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "persistent_outage_duration": {
@@ -1112,11 +1112,11 @@
                                 "type": "number"
                             },
                             "transient_outage_rate": {
-                                "description": "[year^-1] number of expected transient outages per year (outages cleared by reconnectors or other)",
+                                "description": "[events/year] number of expected transient outages per year (outages cleared by reconnectors or other)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "persistent_outage_rate": {
-                                "description": "[year^-1] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "description": "[events/year] number of expected persistent outages per year (outages not cleared by reconnectors)",
                                 "$ref": "#/$defs/nonnegative_number"
                             },
                             "persistent_outage_duration": {
