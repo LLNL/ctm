@@ -1,7 +1,7 @@
 {
     "ctm_version": "v0.1",
     "solution": {
-        "global_": {
+        "global": {
             "unit_convention": "PER_UNIT_SYSTEM_BASE",
             "base_mva": 100.0
         },

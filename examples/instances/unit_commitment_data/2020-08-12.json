@@ -1,7 +1,7 @@
 {
     "ctm_version": "v0.1",
     "network": {
-        "global_": {
+        "global": {
             "unit_convention": "PER_UNIT_SYSTEM_BASE",
             "base_mva": 100.0,
             "bus_ref": "B113"
@@ -12752,7 +12752,7 @@
         ]
     },
     "temporal_boundary": {
-        "global_": {
+        "global": {
             "time_elapsed": 3600.0
         },
         "gen": [
