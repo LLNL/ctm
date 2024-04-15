@@ -17,15 +17,14 @@
             "description": "structure to hold persistent network data",
             "type": "object",
             "required": [
-                "global",
+                "global_params",
                 "area",
-                "zone",
                 "bus",
                 "load",
                 "gen"
             ],
             "properties": {
-                "global": {
+                "global_params": {
                     "description": "structure to hold global settings for parameters in the network",
                     "type": "object",
                     "required": [
@@ -1191,10 +1190,10 @@
             "description": "structure to hold data on initial conditions of power system (state prior to start of time series data)",
             "type": "object",
             "required": [
-                "global"
+                "global_params"
             ],
             "properties": {
-                "global": {
+                "global_params": {
                     "description": "structure to hold global parameters of temporal boundary",
                     "type": "object",
                     "required": [

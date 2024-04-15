@@ -16,13 +16,13 @@
             "description": "structure to hold persistent solution data",
             "type": "object",
             "required": [
-                "global",
+                "global_params",
                 "bus",
                 "gen",
                 "hvdc_p2p"
             ],
             "properties": {
-                "global": {
+                "global_params": {
                     "description": "structure to hold global settings for parameters in the network",
                     "type": "object",
                     "required": [
