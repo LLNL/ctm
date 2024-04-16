@@ -18,8 +18,7 @@
             "required": [
                 "global_params",
                 "bus",
-                "gen",
-                "hvdc_p2p"
+                "gen"
             ],
             "properties": {
                 "global_params": {
