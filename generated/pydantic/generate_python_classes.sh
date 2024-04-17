@@ -4,11 +4,11 @@
 source ~/.python_environments/for_ctm/bin/activate
 
 echo "CTM Data Schema"
-datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../json_schemas/ctm_data_schema.json --input-file-type jsonschema --output ctmdata.py --output-model-type pydantic_v2.BaseModel
+datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../../json_schemas/ctm_data_schema.json --input-file-type jsonschema --output ctmdata.py --output-model-type pydantic_v2.BaseModel
 echo "CTM Solution Schema"
-datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../json_schemas/ctm_solution_schema.json --input-file-type jsonschema --output ctmsolution.py --output-model-type pydantic_v2.BaseModel
+datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../../json_schemas/ctm_solution_schema.json --input-file-type jsonschema --output ctmsolution.py --output-model-type pydantic_v2.BaseModel
 echo "CTM Time Series Schema"
-datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../json_schemas/ctm_time_series_schema.json --input-file-type jsonschema --output ctmtimeseries.py --output-model-type pydantic_v2.BaseModel
+datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../../json_schemas/ctm_time_series_schema.json --input-file-type jsonschema --output ctmtimeseries.py --output-model-type pydantic_v2.BaseModel
 deactivate
 
 for i in "ctmdata.py CtmData" "ctmsolution.py CtmSolution" "ctmtimeseries.py CtmTimeSeriesData"
