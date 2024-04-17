@@ -42,15 +42,6 @@ The repository directories are organized as follows:
 * `examples`: contains example datasets in CTM JSON Schema compliant format and example scripts that
               use CTM for important use cases.
 
-## Initiative History
-
-The CTM authors started on this initiative in 2019, prompted by an uptick in new power system
-modeling tools, each of which using a different subset of the system parameters and specifying its
-input on a different format. In 2023, this effort was reinvigorated by US DOE-sponsored projects
-requiring multiple tools providing a common interface to access them, leading to the translation of
-the initial specification to JSON and its expansion to cover use cases beyond power flow and optimal
-power flow.
-
 ## Feature Roadmap
 
 * `v0.1`: Initial release.
@@ -69,6 +60,15 @@ power flow.
 This CTM specification has been developed with the support of the US Department of Energy (DOE),
 Office of Electricty, Transmission Reliability and Resilience Program and the North American Energy
 Resilience Model (NAERM).
+
+## Initiative History
+
+The CTM authors started on this initiative in 2019, prompted by an uptick in new power system
+modeling tools, each of which using a different subset of the system parameters and specifying its
+input on a different format. In 2023, this effort was reinvigorated by US DOE-sponsored projects
+requiring multiple tools providing a common interface to access them, leading to the translation of
+the initial specification to JSON and its expansion to cover use cases beyond power flow and optimal
+power flow.
 
 ## Contributors
 
