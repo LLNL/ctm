@@ -53,7 +53,8 @@ The repository directories are organized as follows:
     - Dynamic model specifications for generators (e.g., machines and controllers).
     - Sequence model specifications for generators, transformers, and power lines.
     - C++ classes and Julia struct specifications.
-* `v0.3`: Additional examples and documentation of usage.
+* `v0.3`: Scalability features.
+    - Support for HDF5 Time Series specification.
 
 ## Acknowledgments
 
