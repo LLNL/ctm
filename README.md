@@ -45,16 +45,17 @@ The repository directories are organized as follows:
 ## Feature Roadmap
 
 * `v0.1`: Initial release.
-    - Quasi-stationary parameters, covering use cases from power flow up to medium-term
+    - [x] Quasi-stationary parameters, covering use cases from power flow up to medium-term
       reliability studies.
-    - JSON Schemas and Python Pydantic specifications.
-    - Reliability and unit commitment examples.
+    - [x] JSON Schemas and Python Pydantic specifications.
+    - [x] Reliability and unit commitment examples.
 * `v0.2`: Additional features.
-    - Dynamic model specifications for generators (e.g., machines and controllers).
-    - Sequence model specifications for generators, transformers, and power lines.
-    - C++ classes and Julia struct specifications.
+    - [] Dynamic model specifications for generators (e.g., machines and controllers).
+    - [] Sequence model specifications for generators, transformers, and power lines.
+    - [] Additional instances with dynamic and sequence data.
+    - [] C++ classes and Julia struct specifications.
 * `v0.3`: Scalability features.
-    - Support for HDF5 Time Series specification.
+    - [] Support for HDF5 Time Series specification.
 
 ## Acknowledgments
 
