@@ -44,7 +44,7 @@ The repository directories are organized as follows:
 
 ## Feature Roadmap
 
-* `v0.1`: Initial release.
+* <del>`v0.1`: Initial release.</del>
     - [x] Quasi-stationary parameters, covering use cases from power flow up to medium-term
       reliability studies.
     - [x] JSON Schemas and Python Pydantic specifications.
