@@ -175,16 +175,18 @@
                                         "uid",
                                         "rg"
                                     ],
-                                    "uid": {
-                                        "description": "uid of reserve product rg contributes to",
-                                        "$ref": "#/$defs/uid"
-                                    },
-                                    "rg" : {
-                                        "description": "[MW or pu] contribution to reserve",
-                                        "anyOf": [
-                                            { "$ref": "#/$defs/nonnegative_number" },
-                                            { "$ref": "#/$defs/time_series_reference" }
-                                        ]
+                                    "properties": {
+                                        "uid": {
+                                            "description": "uid of reserve product rg contributes to",
+                                            "$ref": "#/$defs/uid"
+                                        },
+                                        "rg" : {
+                                            "description": "[MW or pu] contribution to reserve",
+                                            "anyOf": [
+                                                { "$ref": "#/$defs/nonnegative_number" },
+                                                { "$ref": "#/$defs/time_series_reference" }
+                                            ]
+                                        }
                                     }
                                 }
                             },

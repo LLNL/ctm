@@ -1210,6 +1210,7 @@
                     "type": "array",
                     "items": {
                         "description": "structure to hold initial state of bus variables",
+                        "type": "object",
                         "required": [
                             "uid",
                             "va"
@@ -1237,6 +1238,7 @@
                     "type": "array",
                     "items": {
                         "description": "structure to hold initial state of shunt variables",
+                        "type": "object",
                         "required": [
                             "uid",
                             "num_steps"
