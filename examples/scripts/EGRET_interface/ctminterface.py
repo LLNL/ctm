@@ -12,7 +12,7 @@ This module provides supporting functions for parsing (and writing) CTM JSON fil
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../../generated_pydantic'))
+sys.path.insert(0, os.path.abspath('../../../generated/pydantic'))
 
 import ctmdata
 import ctmsolution
