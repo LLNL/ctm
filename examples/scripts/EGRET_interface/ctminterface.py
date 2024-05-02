@@ -234,8 +234,10 @@ def ctm_load_to_md(ctm_load, ctm_ts_data, md_system, md_elems):
                       'bus': str(elem.bus)}
         p_ts = np.zeros(len(md_system['time_keys']))
         add_const_or_ts(p_ts, elem.pd, ctm_ts_data)
-        add_const_or_ts(p_ts, elem.pd_i, ctm_ts_data)
-        add_const_or_ts(p_ts, elem.pd_y, ctm_ts_data)
+        if elem.pd_i != None :
+            add_const_or_ts(p_ts, elem.pd_i, ctm_ts_data)
+        if elem.pd_y != None :
+            add_const_or_ts(p_ts, elem.pd_y, ctm_ts_data)
         p_ts *= md_system['baseMVA']
         elem_dict['p_load'] = { 'data_type' : 'time_series',
                                 'values' : p_ts.tolist() }
@@ -250,18 +252,30 @@ def get_generator_type(ctm_generator):
     else:
         return 'thermal'
 
+def one_if_none(x):
+    if x == None:
+        return 1.0
+    else:
+        return x
+
 def get_thermal_params(md_dict, elem, baseMVA):
     md_dict['fixed_commitment'] = 1 if bool(elem.service_required) else None
     md_dict['ramp_up_60min'] = elem.pg_delta_ub * baseMVA
     md_dict['ramp_down_60min'] = elem.pg_delta_lb * baseMVA
     md_dict['startup_capacity'] = elem.pg_lb * baseMVA
     md_dict['shutdown_capacity'] = elem.pg_lb * baseMVA
-    md_dict['min_up_time'] = elem.in_service_time_lb
-    md_dict['min_down_time'] = elem.down_time_lb
+    md_dict['min_up_time'] = one_if_none(elem.in_service_time_lb)
+    md_dict['min_down_time'] = one_if_none(elem.down_time_lb)
     # startup cost... this must be double checked with Ben Kenueven @ NREL
-    su_cost = [(elem.down_time_lb, elem.startup_cost_hot),
-               (elem.startup_time_hot, elem.startup_cost_warm),
-               (elem.startup_time_warm, elem.startup_cost_cold)]
+    if elem.startup_cost_hot != None and \
+       elem.startup_time_hot != None and \
+       elem.startup_cost_warm != None and \
+       elem.startup_time_warm != None :
+        su_cost = [(elem.down_time_lb, elem.startup_cost_hot),
+                   (elem.startup_time_hot, elem.startup_cost_warm),
+                   (elem.startup_time_warm, elem.startup_cost_cold)]
+    else :
+        su_cost = [(elem.down_time_lb, elem.startup_cost_cold)]
     md_dict['startup_cost'] = []
     for i in range(len(su_cost)):
         if len(md_dict['startup_cost']) == 0:
@@ -284,7 +298,9 @@ def get_thermal_params(md_dict, elem, baseMVA):
                                        for i in range(len(elem.cost_pg_parameters.x)))
 
 def get_ctm_limit(ctm_lim, ctm_ts_data, md_system):
-    if type(ctm_lim) == float :
+    if ctm_lim == None :
+        return None
+    elif type(ctm_lim) == float :
         return ctm_lim * md_system['baseMVA']
     else :
         p_ts = np.zeros(len(md_system['time_keys']))
@@ -296,21 +312,64 @@ def get_gen_temporal_boundary(ctm_temporal_boundary_gen, gen_uid):
     obj_generator = (tbg for tbg in ctm_temporal_boundary_gen if tbg.uid == gen_uid)
     return next(obj_generator)
 
+def fix_p_limits(p_min, p_max):
+    p_inconsistent_idx = [i for i,(x,y) in enumerate(zip(p_min['values'], p_max['values'])) if x > y]
+    for i in p_inconsistent_idx:
+        p_min['values'][i] = 0.0
+        p_max['values'][i] = 0.0
+
+def show_inconsisten_p_limits_message(elem_dict):
+    print('[warn] p_min > p_max for generator ' + elem_dict['name'] + '. Will assume offline at conflicting time intervals.')
+
+def verify_and_fix_p_limits(elem_dict):
+    if type(elem_dict['p_min']) == float and \
+       type(elem_dict['p_max']) == float:
+        if elem_dict['p_min'] > elem_dict['p_max']:
+            show_inconsisten_p_limits_message(elem_dict)
+            elem_dict['p_min'] = 0.0
+            elem_dict['p_max'] = 0.0
+    elif type(elem_dict['p_min']) == float and \
+        type(elem_dict['p_max']) == dict:
+        if any([elem_dict['p_min'] > p_max_t for p_max_t in elem_dict['p_max']['values']]):
+            show_inconsisten_p_limits_message(elem_dict)
+            elem_dict['p_min'] = { 'data_type' : 'time_series', 
+                                   'values' :  [elem_dict['p_min']] * len(elem_dict['p_max']['values']) }
+            fix_p_limits(elem_dict['p_min'], elem_dict['p_max'])
+    elif type(elem_dict['p_min']) == dict and \
+        type(elem_dict['p_max']) == float:
+        if any([p_min_t > elem_dict['p_max'] for p_min_t in elem_dict['p_min']['values']]):
+            show_inconsisten_p_limits_message(elem_dict)
+            elem_dict['p_max'] = { 'data_type' : 'time_series', 
+                                   'values' :  [elem_dict['p_max']] * len(elem_dict['p_min']['values']) }
+            fix_p_limits(elem_dict['p_min'], elem_dict['p_max'])
+    elif type(elem_dict['p_min']) == dict and \
+        type(elem_dict['p_max']) == dict:
+        if any([p_min_t > p_max_t for p_min_t, p_max_t in \
+               zip(elem_dict['p_min']['values'], elem_dict['p_max']['values'])]):
+            show_inconsisten_p_limits_message(elem_dict)
+            fix_p_limits(elem_dict['p_min'], elem_dict['p_max'])
+    else:
+        raise Exception('unexpected types for p_min and p_max')
+
 def ctm_gen_to_md(ctm_gen, ctm_ts_data, ctm_temporal_boundary_gen, md_system, md_elems):
     if 'bus' not in md_elems:
         raise Exception('gen parser can only be called after bus parser')
     out = {}
     tmp_boundary_uids = list((g.uid for g in ctm_temporal_boundary_gen))
     for elem in ctm_gen:
+        if elem.status == 0 :
+            continue
         elem_dict = { 'in_service' : ((elem.status == 1) and \
                                       md_elems['bus'][str(elem.bus)]['in_service']),
+                      'name' : str(elem.name),
                       'bus' : str(elem.bus),
                       'fuel' : str(elem.primary_source.name),
                       'generator_type': get_generator_type(elem) }
         if elem_dict['generator_type'] == 'thermal':
             get_thermal_params(elem_dict, elem, md_system['baseMVA'])
         elem_dict['p_min'] = get_ctm_limit(elem.pg_lb, ctm_ts_data, md_system)
-        elem_dict['p_max'] = get_ctm_limit(elem.pg_ub, ctm_ts_data, md_system) 
+        elem_dict['p_max'] = get_ctm_limit(elem.pg_ub, ctm_ts_data, md_system)
+        verify_and_fix_p_limits(elem_dict)
         elem_tb = get_gen_temporal_boundary(ctm_temporal_boundary_gen, elem.uid)
         elem_dict['initial_p_output'] = elem_tb.pg * md_system['baseMVA']
         if elem_dict['generator_type'] == 'renewable':
