@@ -1,0 +1,79 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title": "CTM Time Series Data",
+    "description": "Common Transmission Model (CTM) Time Series Data Schema v0.1",
+    "type": "object",
+    "required": [
+        "ctm_version",
+        "time_series_data"
+    ],
+    "properties": {
+        "ctm_version": {
+            "description": "release version of CTM specification",
+            "type": "string"
+        },
+        "time_series_data": {
+            "description": "structure to contain all time variant data of the system/case. All time series are synchronized to the same timestamps, which should should be stored using Unix time. Structure is quasi-tabular, with uid, name, path_to_file, values, and ext being arrays in the same order of said field. This is done in order to allow for better compression (e.g., using HDF5) for the values field.",
+            "type": "object",
+            "required": [
+                "uid"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "[seconds] seconds since epoch (Unix time) for each instant for which time series values are provided",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/nonnegative_number"
+                    }
+                },
+                "uid": {
+                    "description": "array of uids of time series",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/uid"
+                    }
+                },
+                "name": {
+                    "description": "array of names of time series",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "path_to_file": {
+                    "description": "path to file containing all time series information or a separate path for each time series",
+                    "anyOf": [
+                        { "type": "string"},
+                        { "type": "array", "items": { "type": "string" } }
+                    ]
+                },
+                "values": {
+                    "description": "array of time series values",
+                    "type": "array",
+                    "items": {
+                        "description": "time series values for a particular time series",
+                        "type": "array"
+                    }
+                },
+                "ext": {
+                    "description": "additional time series information not currently supported by CTM",
+                    "type": "array"
+                }
+            }
+        }
+    },
+    "$defs": {
+        "nonnegative_number": {
+            "description": "nonnegative real number",
+            "type": "number",
+            "minimum" : 0
+        },
+        "uid": {
+            "description": "object's Unique IDentifier",
+            "anyOf": [
+                { "type": "integer", "minimum": 0 },
+                { "type": "string" }
+            ]
+        }
+    }
+}
