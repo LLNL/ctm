@@ -1,8 +1,8 @@
 # Common Electric Power Transmission System Model JSON Schema Specification
 
 The **C**ommon Electric Power **T**ransmission System **M**odel (CTM) is an intuitive, extensible,
-language-agnostic, and error-resistant spefication of electric power network components parameter
-names and units, and relation between components, intended for use by the research community
+language-agnostic, and range-validating spefication of electric power network components' parameter
+names and units, and the relation between components, intended for use by the research community
 developing new computational methods for power systems operations and simulation.
 
 Power system datasets following the CTM specification can be read as dictionaries and manipulated in
@@ -25,13 +25,14 @@ ps = JSON.parsefile("path/to/ctm_instance.json")
 
 This standard data structure in CTM makes it easy to work in multiple power systems domains (e.g.,
 economic operation, reliability assessment, electricity markets, stability assessment, etc.) without
-requiring conversions between use-case-specific file formats with information loss in the process.
+requiring conversions between use-case-specific file formats and data structures with information
+loss in the process.
 
 This repository specifies CTM as a [JSON Schema](https://json-schema.org/), provides documentation,
-derivate (code-generated) implementations of CTM, and example data and usage of the schema for
+derivated (code-generated) implementations of CTM, and example data and usage of the schema for
 important use cases.
 
-## Repository organization
+## Getting Started
 
 The repository directories are organized as follows:
 
@@ -42,20 +43,35 @@ The repository directories are organized as follows:
 * `examples`: contains example datasets in CTM JSON Schema compliant format and example scripts that
               use CTM for important use cases.
 
-## Feature Roadmap
+## Contributing and development roadmap
 
-* <del>`v0.1`: Initial release.</del>
-    - [x] Quasi-stationary parameters, covering use cases from power flow up to medium-term
-      reliability studies.
-    - [x] JSON Schemas and Python Pydantic specifications.
-    - [x] Reliability and unit commitment examples.
-* `v0.2`: Additional features.
-    - [] Dynamic model specifications for generators (e.g., machines and controllers).
-    - [] Sequence model specifications for generators, transformers, and power lines.
-    - [] Additional instances with dynamic and sequence data.
-    - [] C++ classes and Julia struct specifications.
-* `v0.3`: Scalability features.
-    - [] Support for HDF5 Time Series specification.
+Contributing to CTM is easy: send us a [pull
+request](https://help.github.com/articles/using-pull-requests/). When you send your request, make
+`main` the destination branch.
+
+CTM is a project currently under development. See our [development roadmap](DEVELOPMENT_ROADMAP.md)
+for details and contact the authors below if you would like to get involved in planning and future
+releases.
+
+## Initiative History
+
+The CTM authors started on this initiative in 2019, prompted by an uptick in new power system
+modeling tools, each of which is using a different subset of the system parameters and specifying
+its input on a different format. In 2023, this effort was reinvigorated by US DOE-sponsored projects
+requiring multiple tools providing a common interface to access them, leading to the translation of
+the initial specification to JSON and its expansion to cover use cases beyond power flow and optimal
+power flow
+
+## Authors
+
+The CTM specification in this repository was written by Ignacio Aravena (LLNL,
+aravenasolis1@llnl.gov), building on the initial CTM effort led by Carleton Coffrin (LANL), with
+contributions from Clayton Barrows (NREL), Ray D. Zimmerman (Cornell), and others.
+
+## License
+
+CTM is distributed under the terms of both the MIT license. See [LICENSE](LICENSE) for
+details. All new contributions must be made under the MIT license.
 
 ## Acknowledgments
 
@@ -63,17 +79,4 @@ This CTM specification has been developed with the support of the US Department 
 Office of Electricty, Transmission Reliability and Resilience Program and the North American Energy
 Resilience Model (NAERM).
 
-## Initiative History
-
-The CTM authors started on this initiative in 2019, prompted by an uptick in new power system
-modeling tools, each of which using a different subset of the system parameters and specifying its
-input on a different format. In 2023, this effort was reinvigorated by US DOE-sponsored projects
-requiring multiple tools providing a common interface to access them, leading to the translation of
-the initial specification to JSON and its expansion to cover use cases beyond power flow and optimal
-power flow.
-
-## Contributors
-
-The CTM specification in this repository was written by Ignacio Aravena (LLNL,
-aravenasolis1@llnl.gov), building on the initial CTM effort led by Carleton Coffrin (LANL), with
-contributions from Clayton Barrows (NREL), Ray D. Zimmerman (Cornell), and others. 
+LLNL-CODE-865934
