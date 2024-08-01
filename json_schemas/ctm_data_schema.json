@@ -1095,7 +1095,7 @@
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
-                            "cm_ub_fr": {
+                            "cm_ub_to": {
                                 "description": "[kA or pu] ac persistent current rating, to terminal (if in pu, use to bus base_kv)",
                                 "anyOf": [
                                     { "$ref": "#/$defs/nonnegative_number" },
