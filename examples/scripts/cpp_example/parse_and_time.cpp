@@ -1,4 +1,5 @@
-// compile with: g++-14 -O3 -I./../../../generated/cpp -I./json/single_include/nlohmann parse_and_time.cpp -o parse_and_time.exe
+// compile with: g++ -O3 -I./../../../generated/cpp -I./json/single_include/nlohmann parse_and_time.cpp -o parse_and_time.exe
+// requires C++17 or higher
 
 
 #include <string>   // necessary for passing file names
