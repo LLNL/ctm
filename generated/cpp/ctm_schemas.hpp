@@ -5,6 +5,8 @@
 //  Then include this file, and then do
 //
 //     CtmData data = nlohmann::json::parse(jsonString);
+//     CtmSolution data = nlohmann::json::parse(jsonString);
+//     CtmTimeSeriesData data = nlohmann::json::parse(jsonString);
 
 #pragma once
 
@@ -40,11 +42,11 @@ namespace nlohmann {
 }
 #endif
 
-namespace quicktype {
+namespace ctm_schemas {
     using nlohmann::json;
 
-    #ifndef NLOHMANN_UNTYPED_quicktype_HELPER
-    #define NLOHMANN_UNTYPED_quicktype_HELPER
+    #ifndef NLOHMANN_UNTYPED_ctm_schemas_HELPER
+    #define NLOHMANN_UNTYPED_ctm_schemas_HELPER
     inline json get_untyped(const json & j, const char * property) {
         if (j.find(property) != j.end()) {
             return j.at(property).get<json>();
@@ -57,8 +59,8 @@ namespace quicktype {
     }
     #endif
 
-    #ifndef NLOHMANN_OPTIONAL_quicktype_HELPER
-    #define NLOHMANN_OPTIONAL_quicktype_HELPER
+    #ifndef NLOHMANN_OPTIONAL_ctm_schemas_HELPER
+    #define NLOHMANN_OPTIONAL_ctm_schemas_HELPER
     template <typename T>
     inline std::shared_ptr<T> get_heap_optional(const json & j, const char * property) {
         auto it = j.find(property);
@@ -108,7 +110,7 @@ namespace quicktype {
     /**
      * structure to hold ac line data using concentrated (6-parameter circuit) PI model
      */
-    struct AcLine {
+    struct NetworkAcLine {
         /**
          * [S or pu] shunt susceptance of line at from terminal
          */
@@ -698,7 +700,7 @@ namespace quicktype {
     /**
      * structure to hold reserve product and requirement data
      */
-    struct Reserve {
+    struct NetworkReserve {
         /**
          * additional reserve parameters currently not supported by CTM
          */
@@ -728,7 +730,7 @@ namespace quicktype {
 
     using Gs = std::variant<std::vector<double>, double>;
 
-    using NumSteps = std::variant<std::vector<int64_t>, int64_t>;
+    using NumStepsUbUnion = std::variant<std::vector<int64_t>, int64_t>;
 
     /**
      * structure to hold shunt data
@@ -761,7 +763,7 @@ namespace quicktype {
         /**
          * upper bound for number of energized steps of shunt section (lower bound is always 0)
          */
-        NumSteps num_steps_ub;
+        NumStepsUbUnion num_steps_ub;
         int64_t status;
         BusFr uid;
     };
@@ -975,7 +977,7 @@ namespace quicktype {
      * structure to hold persistent network data
      */
     struct Network {
-        std::optional<std::vector<AcLine>> ac_line;
+        std::optional<std::vector<NetworkAcLine>> ac_line;
         std::vector<Area> area;
         std::vector<NetworkBus> bus;
         std::vector<NetworkGen> gen;
@@ -985,7 +987,7 @@ namespace quicktype {
         NetworkGlobalParams global_params;
         std::optional<std::vector<NetworkHvdcP2P>> hvdc_p2_p;
         std::vector<Load> load;
-        std::optional<std::vector<Reserve>> reserve;
+        std::optional<std::vector<NetworkReserve>> reserve;
         std::optional<std::vector<NetworkShunt>> shunt;
         std::optional<std::vector<NetworkStorage>> storage;
         std::optional<std::vector<NetworkSwitch>> network_switch;
@@ -1105,7 +1107,7 @@ namespace quicktype {
         /**
          * [-] number of initial energized steps per section
          */
-        NumSteps num_steps;
+        NumStepsUbUnion num_steps;
         /**
          * uid of shunt this record refers to
          */
@@ -1202,7 +1204,7 @@ namespace quicktype {
      * the same order of said field. This is done in order to allow for better compression
      * (e.g., using HDF5) for the values field.
      */
-    struct TimeSeriesData {
+    struct CtmDataTimeSeriesData {
         /**
          * additional time series information not currently supported by CTM
          */
@@ -1255,16 +1257,433 @@ namespace quicktype {
          * the same order of said field. This is done in order to allow for better compression
          * (e.g., using HDF5) for the values field.
          */
-        std::optional<TimeSeriesData> time_series_data;
+        std::optional<CtmDataTimeSeriesData> time_series_data;
+    };
+
+    /**
+     * structure to hold a reference (possibly, to be scaled) to a time series
+     */
+    struct CtmSolutionSchema {
+        /**
+         * [-] scale factor to be applied to the pointed-to time series to obtain this field's values
+         */
+        double scale_factor;
+        /**
+         * uid of time series (in time_series_data) this reference points to
+         */
+        BusFr uid;
+    };
+
+    using PlFr = std::variant<CtmSolutionSchema, double>;
+
+    /**
+     * structure to hold switch solution data
+     */
+    struct SolutionAcLine {
+        /**
+         * additional switch parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] active power entering the ac line at its from terminal
+         */
+        std::optional<PlFr> pl_fr;
+        /**
+         * [MVAr or pu] active power entering the ac line at its from terminal
+         */
+        std::optional<PlFr> pl_to;
+        /**
+         * [MVAr or pu] reactive power entering the ac line at its from terminal
+         */
+        std::optional<PlFr> ql_fr;
+        /**
+         * [MVAr or pu] reactive power entering the ac line at its to terminal
+         */
+        std::optional<PlFr> ql_to;
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold bus solution data
+     */
+    struct SolutionBus {
+        /**
+         * additional bus parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] signed power imbalance; positive indicates active load loss
+         */
+        std::optional<PlFr> p_imbalance;
+        /**
+         * [$/MW or $/pu] dual of active power balance constraints
+         */
+        std::optional<PlFr> p_lambda;
+        /**
+         * [MVAr or pu] signed power imbalance; positive indicates reactive load loss
+         */
+        std::optional<PlFr> q_imbalance;
+        /**
+         * [$/MVAr or $/pu] dual of reactive power balance constraints
+         */
+        std::optional<PlFr> q_lambda;
+        BusFr uid;
+        /**
+         * [deg] voltage magnitude
+         */
+        PlFr va;
+        /**
+         * [kV or pu] voltage magnitude
+         */
+        std::optional<PlFr> vm;
+    };
+
+    using InService = std::variant<CtmSolutionSchema, int64_t>;
+
+    using Rg = std::variant<CtmSolutionSchema, double>;
+
+    /**
+     * structure to hold reserve provision to a single reserve product
+     */
+    struct ReserveProvision {
+        /**
+         * [MW or pu] contribution to reserve
+         */
+        Rg rg;
+        /**
+         * uid of reserve product rg contributes to
+         */
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold generator solution data
+     */
+    struct SolutionGen {
+        /**
+         * additional generator parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * commitment binary indicator; 0=>unit is turned off, 1=>unit is online
+         */
+        std::optional<InService> in_service;
+        /**
+         * [MW or pu] active power injection
+         */
+        PlFr pg;
+        /**
+         * [MVAr or pu] reactive power injection
+         */
+        std::optional<PlFr> qg;
+        std::optional<std::vector<ReserveProvision>> reserve_provision;
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold global settings for parameters in the network
+     */
+    struct SolutionGlobalParams {
+        /**
+         * [MVA] system-wide apparent power base
+         */
+        std::optional<double> base_mva;
+        /**
+         * units used for physical network parameters
+         */
+        UnitConvention unit_convention;
+    };
+
+    /**
+     * structure to hold point-to-point hvdc line solution data
+     */
+    struct SolutionHvdcP2P {
+        /**
+         * additional hvdc point-to-point parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] active power entering the hvdc line at its from terminal
+         */
+        PlFr pdc_fr;
+        /**
+         * [MW or pu] active power entering the hvdc line at its to terminal
+         */
+        PlFr pdc_to;
+        /**
+         * [MVAr or pu] reactive power entering the hvdc line at its from terminal
+         */
+        std::optional<PlFr> qdc_fr;
+        /**
+         * [MVAr or pu] reactive power entering the hvdc line at its to terminal
+         */
+        std::optional<PlFr> qdc_to;
+        BusFr uid;
+        /**
+         * [kV or pu] voltage at the dc side
+         */
+        std::optional<PlFr> vm_dc;
+    };
+
+    /**
+     * structure to hold reserve product solution data
+     */
+    struct SolutionReserve {
+        /**
+         * additional reserve parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] shortfall on reserve product
+         */
+        PlFr shortfall;
+        BusFr uid;
+    };
+
+    using PurpleNumSteps = std::variant<std::vector<int64_t>, CtmSolutionSchema, int64_t>;
+
+    /**
+     * structure to hold shunt solution data
+     */
+    struct SolutionShunt {
+        /**
+         * additional shunt parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * number of energized steps of shunt section (lower bound is always 0)
+         */
+        PurpleNumSteps num_steps;
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold switch solution data
+     */
+    struct SolutionSwitch {
+        /**
+         * additional switch parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] active power entering the switch at its from terminal
+         */
+        std::optional<PlFr> psw_fr;
+        /**
+         * [MVAr or pu] reactive power entering the switch at its from terminal
+         */
+        std::optional<PlFr> qsw_fr;
+        /**
+         * binary indicator of switch state; 0=>open, 1=>closed
+         */
+        InService state;
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold storage (battery) solution data
+     */
+    struct SolutionStorage {
+        /**
+         * [MW or pu] rate of charge
+         */
+        std::optional<Rg> charge;
+        /**
+         * [MW or pu] rate of discharge
+         */
+        std::optional<Rg> discharge;
+        /**
+         * [MWh or pu*h] state of charge
+         */
+        Rg energy;
+        /**
+         * additional storage parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] active power injection
+         */
+        PlFr ps;
+        /**
+         * [MW or pu] reactive power injection
+         */
+        std::optional<PlFr> qs;
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold 2-winding transformer solution data
+     */
+    struct SolutionTransformer {
+        /**
+         * additional 2-winding transformer parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] active power entering the transformer at its from terminal
+         */
+        std::optional<PlFr> pt_fr;
+        /**
+         * [MW or pu] active power entering the transformer at its to terminal
+         */
+        std::optional<PlFr> pt_to;
+        /**
+         * [MVAr or pu] reactive power entering the transformer at its from terminal
+         */
+        std::optional<PlFr> qt_fr;
+        /**
+         * [MVAr or pu] reactive power entering the transformer at its to terminal
+         */
+        std::optional<PlFr> qt_to;
+        /**
+         * [deg] angle phase shift
+         */
+        std::optional<PlFr> ta;
+        /**
+         * [-] tap ratio
+         */
+        std::optional<PlFr> tm;
+        BusFr uid;
+    };
+
+    /**
+     * structure to hold persistent solution data
+     */
+    struct Solution {
+        std::optional<std::vector<SolutionAcLine>> ac_line;
+        std::vector<SolutionBus> bus;
+        std::vector<SolutionGen> gen;
+        /**
+         * structure to hold global settings for parameters in the network
+         */
+        SolutionGlobalParams global_params;
+        std::optional<std::vector<SolutionHvdcP2P>> hvdc_p2_p;
+        std::optional<std::vector<SolutionReserve>> reserve;
+        std::optional<std::vector<SolutionShunt>> shunt;
+        std::optional<std::vector<SolutionStorage>> storage;
+        std::optional<std::vector<SolutionSwitch>> solution_switch;
+        std::optional<std::vector<SolutionTransformer>> transformer;
+    };
+
+    /**
+     * structure to contain all time variant data of the system/case. All time series are
+     * synchronized to the same timestamps, which should should be stored using Unix time.
+     * Structure is quasi-tabular, with uid, name, path_to_file, values, and ext being arrays in
+     * the same order of said field. This is done in order to allow for better compression
+     * (e.g., using HDF5) for the values field.
+     */
+    struct CtmSolutionTimeSeriesData {
+        /**
+         * additional time series information not currently supported by CTM
+         */
+        std::optional<std::vector<nlohmann::json>> ext;
+        /**
+         * array of names of time series
+         */
+        std::optional<std::vector<std::string>> name;
+        /**
+         * path to file containing all time series information or a separate path for each time
+         * series
+         */
+        std::optional<PathToFile> path_to_file;
+        /**
+         * [seconds] seconds since epoch (Unix time) for each instant for which time series values
+         * are provided
+         */
+        std::optional<std::vector<double>> timestamp;
+        /**
+         * array of uids of time series
+         */
+        std::vector<BusFr> uid;
+        /**
+         * array of time series values
+         */
+        std::optional<std::vector<std::vector<nlohmann::json>>> values;
+    };
+
+    /**
+     * Common Transmission Model (CTM) Solution Schema v0.1
+     */
+    struct CtmSolution {
+        /**
+         * release version of CTM specification
+         */
+        std::string ctm_version;
+        /**
+         * structure to hold persistent solution data
+         */
+        Solution solution;
+        /**
+         * structure to contain all time variant data of the system/case. All time series are
+         * synchronized to the same timestamps, which should should be stored using Unix time.
+         * Structure is quasi-tabular, with uid, name, path_to_file, values, and ext being arrays in
+         * the same order of said field. This is done in order to allow for better compression
+         * (e.g., using HDF5) for the values field.
+         */
+        std::optional<CtmSolutionTimeSeriesData> time_series_data;
+    };
+
+    /**
+     * structure to contain all time variant data of the system/case. All time series are
+     * synchronized to the same timestamps, which should should be stored using Unix time.
+     * Structure is quasi-tabular, with uid, name, path_to_file, values, and ext being arrays in
+     * the same order of said field. This is done in order to allow for better compression
+     * (e.g., using HDF5) for the values field.
+     */
+    struct CtmTimeSeriesDataTimeSeriesData {
+        /**
+         * additional time series information not currently supported by CTM
+         */
+        std::optional<std::vector<nlohmann::json>> ext;
+        /**
+         * array of names of time series
+         */
+        std::optional<std::vector<std::string>> name;
+        /**
+         * path to file containing all time series information or a separate path for each time
+         * series
+         */
+        std::optional<PathToFile> path_to_file;
+        /**
+         * [seconds] seconds since epoch (Unix time) for each instant for which time series values
+         * are provided
+         */
+        std::optional<std::vector<double>> timestamp;
+        /**
+         * array of uids of time series
+         */
+        std::vector<BusFr> uid;
+        /**
+         * array of time series values
+         */
+        std::optional<std::vector<std::vector<nlohmann::json>>> values;
+    };
+
+    /**
+     * Common Transmission Model (CTM) Time Series Data Schema v0.1
+     */
+    struct CtmTimeSeriesData {
+        /**
+         * release version of CTM specification
+         */
+        std::string ctm_version;
+        /**
+         * structure to contain all time variant data of the system/case. All time series are
+         * synchronized to the same timestamps, which should should be stored using Unix time.
+         * Structure is quasi-tabular, with uid, name, path_to_file, values, and ext being arrays in
+         * the same order of said field. This is done in order to allow for better compression
+         * (e.g., using HDF5) for the values field.
+         */
+        CtmTimeSeriesDataTimeSeriesData time_series_data;
     };
 }
 
-namespace quicktype {
+namespace ctm_schemas {
 void from_json(const json & j, CmUbAClass & x);
 void to_json(json & j, const CmUbAClass & x);
 
-void from_json(const json & j, AcLine & x);
-void to_json(json & j, const AcLine & x);
+void from_json(const json & j, NetworkAcLine & x);
+void to_json(json & j, const NetworkAcLine & x);
 
 void from_json(const json & j, Area & x);
 void to_json(json & j, const Area & x);
@@ -1290,8 +1709,8 @@ void to_json(json & j, const Load & x);
 void from_json(const json & j, NetworkSwitch & x);
 void to_json(json & j, const NetworkSwitch & x);
 
-void from_json(const json & j, Reserve & x);
-void to_json(json & j, const Reserve & x);
+void from_json(const json & j, NetworkReserve & x);
+void to_json(json & j, const NetworkReserve & x);
 
 void from_json(const json & j, NetworkShunt & x);
 void to_json(json & j, const NetworkShunt & x);
@@ -1335,11 +1754,62 @@ void to_json(json & j, const TemporalBoundaryTransformer & x);
 void from_json(const json & j, TemporalBoundary & x);
 void to_json(json & j, const TemporalBoundary & x);
 
-void from_json(const json & j, TimeSeriesData & x);
-void to_json(json & j, const TimeSeriesData & x);
+void from_json(const json & j, CtmDataTimeSeriesData & x);
+void to_json(json & j, const CtmDataTimeSeriesData & x);
 
 void from_json(const json & j, CtmData & x);
 void to_json(json & j, const CtmData & x);
+
+void from_json(const json & j, CtmSolutionSchema & x);
+void to_json(json & j, const CtmSolutionSchema & x);
+
+void from_json(const json & j, SolutionAcLine & x);
+void to_json(json & j, const SolutionAcLine & x);
+
+void from_json(const json & j, SolutionBus & x);
+void to_json(json & j, const SolutionBus & x);
+
+void from_json(const json & j, ReserveProvision & x);
+void to_json(json & j, const ReserveProvision & x);
+
+void from_json(const json & j, SolutionGen & x);
+void to_json(json & j, const SolutionGen & x);
+
+void from_json(const json & j, SolutionGlobalParams & x);
+void to_json(json & j, const SolutionGlobalParams & x);
+
+void from_json(const json & j, SolutionHvdcP2P & x);
+void to_json(json & j, const SolutionHvdcP2P & x);
+
+void from_json(const json & j, SolutionReserve & x);
+void to_json(json & j, const SolutionReserve & x);
+
+void from_json(const json & j, SolutionShunt & x);
+void to_json(json & j, const SolutionShunt & x);
+
+void from_json(const json & j, SolutionSwitch & x);
+void to_json(json & j, const SolutionSwitch & x);
+
+void from_json(const json & j, SolutionStorage & x);
+void to_json(json & j, const SolutionStorage & x);
+
+void from_json(const json & j, SolutionTransformer & x);
+void to_json(json & j, const SolutionTransformer & x);
+
+void from_json(const json & j, Solution & x);
+void to_json(json & j, const Solution & x);
+
+void from_json(const json & j, CtmSolutionTimeSeriesData & x);
+void to_json(json & j, const CtmSolutionTimeSeriesData & x);
+
+void from_json(const json & j, CtmSolution & x);
+void to_json(json & j, const CtmSolution & x);
+
+void from_json(const json & j, CtmTimeSeriesDataTimeSeriesData & x);
+void to_json(json & j, const CtmTimeSeriesDataTimeSeriesData & x);
+
+void from_json(const json & j, CtmTimeSeriesData & x);
+void to_json(json & j, const CtmTimeSeriesData & x);
 
 void from_json(const json & j, TypeEnum & x);
 void to_json(json & j, const TypeEnum & x);
@@ -1370,27 +1840,27 @@ struct adl_serializer<std::variant<int64_t, std::string>> {
 };
 
 template <>
-struct adl_serializer<std::variant<quicktype::CmUbAClass, double>> {
-    static void from_json(const json & j, std::variant<quicktype::CmUbAClass, double> & x);
-    static void to_json(json & j, const std::variant<quicktype::CmUbAClass, double> & x);
+struct adl_serializer<std::variant<ctm_schemas::CmUbAClass, double>> {
+    static void from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, double> & x);
+    static void to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, double> & x);
 };
 
 template <>
-struct adl_serializer<std::variant<quicktype::CmUbAClass, quicktype::TypeEnum>> {
-    static void from_json(const json & j, std::variant<quicktype::CmUbAClass, quicktype::TypeEnum> & x);
-    static void to_json(json & j, const std::variant<quicktype::CmUbAClass, quicktype::TypeEnum> & x);
+struct adl_serializer<std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum>> {
+    static void from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum> & x);
+    static void to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum> & x);
 };
 
 template <>
-struct adl_serializer<std::variant<std::vector<double>, quicktype::CostPgParametersClass>> {
-    static void from_json(const json & j, std::variant<std::vector<double>, quicktype::CostPgParametersClass> & x);
-    static void to_json(json & j, const std::variant<std::vector<double>, quicktype::CostPgParametersClass> & x);
+struct adl_serializer<std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass>> {
+    static void from_json(const json & j, std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x);
+    static void to_json(json & j, const std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x);
 };
 
 template <>
-struct adl_serializer<std::variant<quicktype::CmUbAClass, int64_t>> {
-    static void from_json(const json & j, std::variant<quicktype::CmUbAClass, int64_t> & x);
-    static void to_json(json & j, const std::variant<quicktype::CmUbAClass, int64_t> & x);
+struct adl_serializer<std::variant<ctm_schemas::CmUbAClass, int64_t>> {
+    static void from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, int64_t> & x);
+    static void to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, int64_t> & x);
 };
 
 template <>
@@ -1410,8 +1880,26 @@ struct adl_serializer<std::variant<std::vector<std::string>, std::string>> {
     static void from_json(const json & j, std::variant<std::vector<std::string>, std::string> & x);
     static void to_json(json & j, const std::variant<std::vector<std::string>, std::string> & x);
 };
+
+template <>
+struct adl_serializer<std::variant<ctm_schemas::CtmSolutionSchema, double>> {
+    static void from_json(const json & j, std::variant<ctm_schemas::CtmSolutionSchema, double> & x);
+    static void to_json(json & j, const std::variant<ctm_schemas::CtmSolutionSchema, double> & x);
+};
+
+template <>
+struct adl_serializer<std::variant<ctm_schemas::CtmSolutionSchema, int64_t>> {
+    static void from_json(const json & j, std::variant<ctm_schemas::CtmSolutionSchema, int64_t> & x);
+    static void to_json(json & j, const std::variant<ctm_schemas::CtmSolutionSchema, int64_t> & x);
+};
+
+template <>
+struct adl_serializer<std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t>> {
+    static void from_json(const json & j, std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t> & x);
+    static void to_json(json & j, const std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t> & x);
+};
 }
-namespace quicktype {
+namespace ctm_schemas {
     inline void from_json(const json & j, CmUbAClass& x) {
         x.scale_factor = j.at("scale_factor").get<double>();
         x.uid = j.at("uid").get<BusFr>();
@@ -1423,7 +1911,7 @@ namespace quicktype {
         j["uid"] = x.uid;
     }
 
-    inline void from_json(const json & j, AcLine& x) {
+    inline void from_json(const json & j, NetworkAcLine& x) {
         x.b_fr = get_stack_optional<double>(j, "b_fr");
         x.b_to = get_stack_optional<double>(j, "b_to");
         x.bus_fr = j.at("bus_fr").get<BusFr>();
@@ -1450,7 +1938,7 @@ namespace quicktype {
         x.x = j.at("x").get<double>();
     }
 
-    inline void to_json(json & j, const AcLine & x) {
+    inline void to_json(json & j, const NetworkAcLine & x) {
         j = json::object();
         j["b_fr"] = x.b_fr;
         j["b_to"] = x.b_to;
@@ -1744,7 +2232,7 @@ namespace quicktype {
         j["uid"] = x.uid;
     }
 
-    inline void from_json(const json & j, Reserve& x) {
+    inline void from_json(const json & j, NetworkReserve& x) {
         x.ext = get_untyped(j, "ext");
         x.name = get_stack_optional<std::string>(j, "name");
         x.participants = get_stack_optional<std::vector<BusFr>>(j, "participants");
@@ -1755,7 +2243,7 @@ namespace quicktype {
         x.uid = j.at("uid").get<BusFr>();
     }
 
-    inline void to_json(json & j, const Reserve & x) {
+    inline void to_json(json & j, const NetworkReserve & x) {
         j = json::object();
         j["ext"] = x.ext;
         j["name"] = x.name;
@@ -1774,7 +2262,7 @@ namespace quicktype {
         x.gs = j.at("gs").get<Gs>();
         x.name = get_stack_optional<std::string>(j, "name");
         x.nominal_mva = get_stack_optional<double>(j, "nominal_mva");
-        x.num_steps_ub = j.at("num_steps_ub").get<NumSteps>();
+        x.num_steps_ub = j.at("num_steps_ub").get<NumStepsUbUnion>();
         x.status = j.at("status").get<int64_t>();
         x.uid = j.at("uid").get<BusFr>();
     }
@@ -1910,14 +2398,14 @@ namespace quicktype {
     }
 
     inline void from_json(const json & j, Network& x) {
-        x.ac_line = get_stack_optional<std::vector<AcLine>>(j, "ac_line");
+        x.ac_line = get_stack_optional<std::vector<NetworkAcLine>>(j, "ac_line");
         x.area = j.at("area").get<std::vector<Area>>();
         x.bus = j.at("bus").get<std::vector<NetworkBus>>();
         x.gen = j.at("gen").get<std::vector<NetworkGen>>();
         x.global_params = j.at("global_params").get<NetworkGlobalParams>();
         x.hvdc_p2_p = get_stack_optional<std::vector<NetworkHvdcP2P>>(j, "hvdc_p2p");
         x.load = j.at("load").get<std::vector<Load>>();
-        x.reserve = get_stack_optional<std::vector<Reserve>>(j, "reserve");
+        x.reserve = get_stack_optional<std::vector<NetworkReserve>>(j, "reserve");
         x.shunt = get_stack_optional<std::vector<NetworkShunt>>(j, "shunt");
         x.storage = get_stack_optional<std::vector<NetworkStorage>>(j, "storage");
         x.network_switch = get_stack_optional<std::vector<NetworkSwitch>>(j, "switch");
@@ -2010,7 +2498,7 @@ namespace quicktype {
 
     inline void from_json(const json & j, TemporalBoundaryShunt& x) {
         x.ext = get_untyped(j, "ext");
-        x.num_steps = j.at("num_steps").get<NumSteps>();
+        x.num_steps = j.at("num_steps").get<NumStepsUbUnion>();
         x.uid = j.at("uid").get<BusFr>();
     }
 
@@ -2089,7 +2577,7 @@ namespace quicktype {
         j["transformer"] = x.transformer;
     }
 
-    inline void from_json(const json & j, TimeSeriesData& x) {
+    inline void from_json(const json & j, CtmDataTimeSeriesData& x) {
         x.ext = get_stack_optional<std::vector<nlohmann::json>>(j, "ext");
         x.name = get_stack_optional<std::vector<std::string>>(j, "name");
         x.path_to_file = get_stack_optional<std::variant<std::vector<std::string>, std::string>>(j, "path_to_file");
@@ -2098,7 +2586,7 @@ namespace quicktype {
         x.values = get_stack_optional<std::vector<std::vector<nlohmann::json>>>(j, "values");
     }
 
-    inline void to_json(json & j, const TimeSeriesData & x) {
+    inline void to_json(json & j, const CtmDataTimeSeriesData & x) {
         j = json::object();
         j["ext"] = x.ext;
         j["name"] = x.name;
@@ -2112,7 +2600,7 @@ namespace quicktype {
         x.ctm_version = j.at("ctm_version").get<std::string>();
         x.network = j.at("network").get<Network>();
         x.temporal_boundary = j.at("temporal_boundary").get<TemporalBoundary>();
-        x.time_series_data = get_stack_optional<TimeSeriesData>(j, "time_series_data");
+        x.time_series_data = get_stack_optional<CtmDataTimeSeriesData>(j, "time_series_data");
     }
 
     inline void to_json(json & j, const CtmData & x) {
@@ -2120,6 +2608,297 @@ namespace quicktype {
         j["ctm_version"] = x.ctm_version;
         j["network"] = x.network;
         j["temporal_boundary"] = x.temporal_boundary;
+        j["time_series_data"] = x.time_series_data;
+    }
+
+    inline void from_json(const json & j, CtmSolutionSchema& x) {
+        x.scale_factor = j.at("scale_factor").get<double>();
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const CtmSolutionSchema & x) {
+        j = json::object();
+        j["scale_factor"] = x.scale_factor;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionAcLine& x) {
+        x.ext = get_untyped(j, "ext");
+        x.pl_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "pl_fr");
+        x.pl_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "pl_to");
+        x.ql_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "ql_fr");
+        x.ql_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "ql_to");
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionAcLine & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["pl_fr"] = x.pl_fr;
+        j["pl_to"] = x.pl_to;
+        j["ql_fr"] = x.ql_fr;
+        j["ql_to"] = x.ql_to;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionBus& x) {
+        x.ext = get_untyped(j, "ext");
+        x.p_imbalance = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "p_imbalance");
+        x.p_lambda = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "p_lambda");
+        x.q_imbalance = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "q_imbalance");
+        x.q_lambda = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "q_lambda");
+        x.uid = j.at("uid").get<BusFr>();
+        x.va = j.at("va").get<PlFr>();
+        x.vm = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "vm");
+    }
+
+    inline void to_json(json & j, const SolutionBus & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["p_imbalance"] = x.p_imbalance;
+        j["p_lambda"] = x.p_lambda;
+        j["q_imbalance"] = x.q_imbalance;
+        j["q_lambda"] = x.q_lambda;
+        j["uid"] = x.uid;
+        j["va"] = x.va;
+        j["vm"] = x.vm;
+    }
+
+    inline void from_json(const json & j, ReserveProvision& x) {
+        x.rg = j.at("rg").get<Rg>();
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const ReserveProvision & x) {
+        j = json::object();
+        j["rg"] = x.rg;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionGen& x) {
+        x.ext = get_untyped(j, "ext");
+        x.in_service = get_stack_optional<std::variant<CtmSolutionSchema, int64_t>>(j, "in_service");
+        x.pg = j.at("pg").get<PlFr>();
+        x.qg = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qg");
+        x.reserve_provision = get_stack_optional<std::vector<ReserveProvision>>(j, "reserve_provision");
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionGen & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["in_service"] = x.in_service;
+        j["pg"] = x.pg;
+        j["qg"] = x.qg;
+        j["reserve_provision"] = x.reserve_provision;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionGlobalParams& x) {
+        x.base_mva = get_stack_optional<double>(j, "base_mva");
+        x.unit_convention = j.at("unit_convention").get<UnitConvention>();
+    }
+
+    inline void to_json(json & j, const SolutionGlobalParams & x) {
+        j = json::object();
+        j["base_mva"] = x.base_mva;
+        j["unit_convention"] = x.unit_convention;
+    }
+
+    inline void from_json(const json & j, SolutionHvdcP2P& x) {
+        x.ext = get_untyped(j, "ext");
+        x.pdc_fr = j.at("pdc_fr").get<PlFr>();
+        x.pdc_to = j.at("pdc_to").get<PlFr>();
+        x.qdc_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qdc_fr");
+        x.qdc_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qdc_to");
+        x.uid = j.at("uid").get<BusFr>();
+        x.vm_dc = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "vm_dc");
+    }
+
+    inline void to_json(json & j, const SolutionHvdcP2P & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["pdc_fr"] = x.pdc_fr;
+        j["pdc_to"] = x.pdc_to;
+        j["qdc_fr"] = x.qdc_fr;
+        j["qdc_to"] = x.qdc_to;
+        j["uid"] = x.uid;
+        j["vm_dc"] = x.vm_dc;
+    }
+
+    inline void from_json(const json & j, SolutionReserve& x) {
+        x.ext = get_untyped(j, "ext");
+        x.shortfall = j.at("shortfall").get<PlFr>();
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionReserve & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["shortfall"] = x.shortfall;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionShunt& x) {
+        x.ext = get_untyped(j, "ext");
+        x.num_steps = j.at("num_steps").get<PurpleNumSteps>();
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionShunt & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["num_steps"] = x.num_steps;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionSwitch& x) {
+        x.ext = get_untyped(j, "ext");
+        x.psw_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "psw_fr");
+        x.qsw_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qsw_fr");
+        x.state = j.at("state").get<InService>();
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionSwitch & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["psw_fr"] = x.psw_fr;
+        j["qsw_fr"] = x.qsw_fr;
+        j["state"] = x.state;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionStorage& x) {
+        x.charge = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "charge");
+        x.discharge = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "discharge");
+        x.energy = j.at("energy").get<Rg>();
+        x.ext = get_untyped(j, "ext");
+        x.ps = j.at("ps").get<PlFr>();
+        x.qs = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qs");
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionStorage & x) {
+        j = json::object();
+        j["charge"] = x.charge;
+        j["discharge"] = x.discharge;
+        j["energy"] = x.energy;
+        j["ext"] = x.ext;
+        j["ps"] = x.ps;
+        j["qs"] = x.qs;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, SolutionTransformer& x) {
+        x.ext = get_untyped(j, "ext");
+        x.pt_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "pt_fr");
+        x.pt_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "pt_to");
+        x.qt_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qt_fr");
+        x.qt_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qt_to");
+        x.ta = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "ta");
+        x.tm = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "tm");
+        x.uid = j.at("uid").get<BusFr>();
+    }
+
+    inline void to_json(json & j, const SolutionTransformer & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["pt_fr"] = x.pt_fr;
+        j["pt_to"] = x.pt_to;
+        j["qt_fr"] = x.qt_fr;
+        j["qt_to"] = x.qt_to;
+        j["ta"] = x.ta;
+        j["tm"] = x.tm;
+        j["uid"] = x.uid;
+    }
+
+    inline void from_json(const json & j, Solution& x) {
+        x.ac_line = get_stack_optional<std::vector<SolutionAcLine>>(j, "ac_line");
+        x.bus = j.at("bus").get<std::vector<SolutionBus>>();
+        x.gen = j.at("gen").get<std::vector<SolutionGen>>();
+        x.global_params = j.at("global_params").get<SolutionGlobalParams>();
+        x.hvdc_p2_p = get_stack_optional<std::vector<SolutionHvdcP2P>>(j, "hvdc_p2p");
+        x.reserve = get_stack_optional<std::vector<SolutionReserve>>(j, "reserve");
+        x.shunt = get_stack_optional<std::vector<SolutionShunt>>(j, "shunt");
+        x.storage = get_stack_optional<std::vector<SolutionStorage>>(j, "storage");
+        x.solution_switch = get_stack_optional<std::vector<SolutionSwitch>>(j, "switch");
+        x.transformer = get_stack_optional<std::vector<SolutionTransformer>>(j, "transformer");
+    }
+
+    inline void to_json(json & j, const Solution & x) {
+        j = json::object();
+        j["ac_line"] = x.ac_line;
+        j["bus"] = x.bus;
+        j["gen"] = x.gen;
+        j["global_params"] = x.global_params;
+        j["hvdc_p2p"] = x.hvdc_p2_p;
+        j["reserve"] = x.reserve;
+        j["shunt"] = x.shunt;
+        j["storage"] = x.storage;
+        j["switch"] = x.solution_switch;
+        j["transformer"] = x.transformer;
+    }
+
+    inline void from_json(const json & j, CtmSolutionTimeSeriesData& x) {
+        x.ext = get_stack_optional<std::vector<nlohmann::json>>(j, "ext");
+        x.name = get_stack_optional<std::vector<std::string>>(j, "name");
+        x.path_to_file = get_stack_optional<std::variant<std::vector<std::string>, std::string>>(j, "path_to_file");
+        x.timestamp = get_stack_optional<std::vector<double>>(j, "timestamp");
+        x.uid = j.at("uid").get<std::vector<BusFr>>();
+        x.values = get_stack_optional<std::vector<std::vector<nlohmann::json>>>(j, "values");
+    }
+
+    inline void to_json(json & j, const CtmSolutionTimeSeriesData & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["name"] = x.name;
+        j["path_to_file"] = x.path_to_file;
+        j["timestamp"] = x.timestamp;
+        j["uid"] = x.uid;
+        j["values"] = x.values;
+    }
+
+    inline void from_json(const json & j, CtmSolution& x) {
+        x.ctm_version = j.at("ctm_version").get<std::string>();
+        x.solution = j.at("solution").get<Solution>();
+        x.time_series_data = get_stack_optional<CtmSolutionTimeSeriesData>(j, "time_series_data");
+    }
+
+    inline void to_json(json & j, const CtmSolution & x) {
+        j = json::object();
+        j["ctm_version"] = x.ctm_version;
+        j["solution"] = x.solution;
+        j["time_series_data"] = x.time_series_data;
+    }
+
+    inline void from_json(const json & j, CtmTimeSeriesDataTimeSeriesData& x) {
+        x.ext = get_stack_optional<std::vector<nlohmann::json>>(j, "ext");
+        x.name = get_stack_optional<std::vector<std::string>>(j, "name");
+        x.path_to_file = get_stack_optional<std::variant<std::vector<std::string>, std::string>>(j, "path_to_file");
+        x.timestamp = get_stack_optional<std::vector<double>>(j, "timestamp");
+        x.uid = j.at("uid").get<std::vector<BusFr>>();
+        x.values = get_stack_optional<std::vector<std::vector<nlohmann::json>>>(j, "values");
+    }
+
+    inline void to_json(json & j, const CtmTimeSeriesDataTimeSeriesData & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["name"] = x.name;
+        j["path_to_file"] = x.path_to_file;
+        j["timestamp"] = x.timestamp;
+        j["uid"] = x.uid;
+        j["values"] = x.values;
+    }
+
+    inline void from_json(const json & j, CtmTimeSeriesData& x) {
+        x.ctm_version = j.at("ctm_version").get<std::string>();
+        x.time_series_data = j.at("time_series_data").get<CtmTimeSeriesDataTimeSeriesData>();
+    }
+
+    inline void to_json(json & j, const CtmTimeSeriesData & x) {
+        j = json::object();
+        j["ctm_version"] = x.ctm_version;
         j["time_series_data"] = x.time_series_data;
     }
 
@@ -2311,18 +3090,18 @@ namespace nlohmann {
         }
     }
 
-    inline void adl_serializer<std::variant<quicktype::CmUbAClass, double>>::from_json(const json & j, std::variant<quicktype::CmUbAClass, double> & x) {
+    inline void adl_serializer<std::variant<ctm_schemas::CmUbAClass, double>>::from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, double> & x) {
         if (j.is_number())
             x = j.get<double>();
         else if (j.is_object())
-            x = j.get<quicktype::CmUbAClass>();
+            x = j.get<ctm_schemas::CmUbAClass>();
         else throw std::runtime_error("Could not deserialise!");
     }
 
-    inline void adl_serializer<std::variant<quicktype::CmUbAClass, double>>::to_json(json & j, const std::variant<quicktype::CmUbAClass, double> & x) {
+    inline void adl_serializer<std::variant<ctm_schemas::CmUbAClass, double>>::to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, double> & x) {
         switch (x.index()) {
             case 0:
-                j = std::get<quicktype::CmUbAClass>(x);
+                j = std::get<ctm_schemas::CmUbAClass>(x);
                 break;
             case 1:
                 j = std::get<double>(x);
@@ -2331,58 +3110,58 @@ namespace nlohmann {
         }
     }
 
-    inline void adl_serializer<std::variant<quicktype::CmUbAClass, quicktype::TypeEnum>>::from_json(const json & j, std::variant<quicktype::CmUbAClass, quicktype::TypeEnum> & x) {
+    inline void adl_serializer<std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum>>::from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum> & x) {
         if (j.is_object())
-            x = j.get<quicktype::CmUbAClass>();
+            x = j.get<ctm_schemas::CmUbAClass>();
         else if (j.is_string())
-            x = j.get<quicktype::TypeEnum>();
+            x = j.get<ctm_schemas::TypeEnum>();
         else throw std::runtime_error("Could not deserialise!");
     }
 
-    inline void adl_serializer<std::variant<quicktype::CmUbAClass, quicktype::TypeEnum>>::to_json(json & j, const std::variant<quicktype::CmUbAClass, quicktype::TypeEnum> & x) {
+    inline void adl_serializer<std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum>>::to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnum> & x) {
         switch (x.index()) {
             case 0:
-                j = std::get<quicktype::CmUbAClass>(x);
+                j = std::get<ctm_schemas::CmUbAClass>(x);
                 break;
             case 1:
-                j = std::get<quicktype::TypeEnum>(x);
+                j = std::get<ctm_schemas::TypeEnum>(x);
                 break;
             default: throw std::runtime_error("Input JSON does not conform to schema!");
         }
     }
 
-    inline void adl_serializer<std::variant<std::vector<double>, quicktype::CostPgParametersClass>>::from_json(const json & j, std::variant<std::vector<double>, quicktype::CostPgParametersClass> & x) {
+    inline void adl_serializer<std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass>>::from_json(const json & j, std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x) {
         if (j.is_object())
-            x = j.get<quicktype::CostPgParametersClass>();
+            x = j.get<ctm_schemas::CostPgParametersClass>();
         else if (j.is_array())
             x = j.get<std::vector<double>>();
         else throw std::runtime_error("Could not deserialise!");
     }
 
-    inline void adl_serializer<std::variant<std::vector<double>, quicktype::CostPgParametersClass>>::to_json(json & j, const std::variant<std::vector<double>, quicktype::CostPgParametersClass> & x) {
+    inline void adl_serializer<std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass>>::to_json(json & j, const std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x) {
         switch (x.index()) {
             case 0:
                 j = std::get<std::vector<double>>(x);
                 break;
             case 1:
-                j = std::get<quicktype::CostPgParametersClass>(x);
+                j = std::get<ctm_schemas::CostPgParametersClass>(x);
                 break;
             default: throw std::runtime_error("Input JSON does not conform to schema!");
         }
     }
 
-    inline void adl_serializer<std::variant<quicktype::CmUbAClass, int64_t>>::from_json(const json & j, std::variant<quicktype::CmUbAClass, int64_t> & x) {
+    inline void adl_serializer<std::variant<ctm_schemas::CmUbAClass, int64_t>>::from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, int64_t> & x) {
         if (j.is_number_integer())
             x = j.get<int64_t>();
         else if (j.is_object())
-            x = j.get<quicktype::CmUbAClass>();
+            x = j.get<ctm_schemas::CmUbAClass>();
         else throw std::runtime_error("Could not deserialise!");
     }
 
-    inline void adl_serializer<std::variant<quicktype::CmUbAClass, int64_t>>::to_json(json & j, const std::variant<quicktype::CmUbAClass, int64_t> & x) {
+    inline void adl_serializer<std::variant<ctm_schemas::CmUbAClass, int64_t>>::to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, int64_t> & x) {
         switch (x.index()) {
             case 0:
-                j = std::get<quicktype::CmUbAClass>(x);
+                j = std::get<ctm_schemas::CmUbAClass>(x);
                 break;
             case 1:
                 j = std::get<int64_t>(x);
@@ -2446,6 +3225,71 @@ namespace nlohmann {
                 break;
             case 1:
                 j = std::get<std::string>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void adl_serializer<std::variant<ctm_schemas::CtmSolutionSchema, double>>::from_json(const json & j, std::variant<ctm_schemas::CtmSolutionSchema, double> & x) {
+        if (j.is_number())
+            x = j.get<double>();
+        else if (j.is_object())
+            x = j.get<ctm_schemas::CtmSolutionSchema>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<ctm_schemas::CtmSolutionSchema, double>>::to_json(json & j, const std::variant<ctm_schemas::CtmSolutionSchema, double> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<ctm_schemas::CtmSolutionSchema>(x);
+                break;
+            case 1:
+                j = std::get<double>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void adl_serializer<std::variant<ctm_schemas::CtmSolutionSchema, int64_t>>::from_json(const json & j, std::variant<ctm_schemas::CtmSolutionSchema, int64_t> & x) {
+        if (j.is_number_integer())
+            x = j.get<int64_t>();
+        else if (j.is_object())
+            x = j.get<ctm_schemas::CtmSolutionSchema>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<ctm_schemas::CtmSolutionSchema, int64_t>>::to_json(json & j, const std::variant<ctm_schemas::CtmSolutionSchema, int64_t> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<ctm_schemas::CtmSolutionSchema>(x);
+                break;
+            case 1:
+                j = std::get<int64_t>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void adl_serializer<std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t>>::from_json(const json & j, std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t> & x) {
+        if (j.is_number_integer())
+            x = j.get<int64_t>();
+        else if (j.is_object())
+            x = j.get<ctm_schemas::CtmSolutionSchema>();
+        else if (j.is_array())
+            x = j.get<std::vector<int64_t>>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t>>::to_json(json & j, const std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutionSchema, int64_t> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<std::vector<int64_t>>(x);
+                break;
+            case 1:
+                j = std::get<ctm_schemas::CtmSolutionSchema>(x);
+                break;
+            case 2:
+                j = std::get<int64_t>(x);
                 break;
             default: throw std::runtime_error("Input JSON does not conform to schema!");
         }
