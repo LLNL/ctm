@@ -19,7 +19,7 @@ import ctmsolution
 import egret.data.model_data as md
 import numpy as np
 
-def create_ModelData(ctm_filename):
+def create_ModelData(ctm_filename=None, ctm_json_str=None):
     """
     Parse JSON CTM input file into a ModelData object containing
     the model_data dictionary
@@ -28,12 +28,14 @@ def create_ModelData(ctm_filename):
     ----------
     ctm_filename : str
         Path and filename of the CTM input file you wish to load
+    ctm_json_str : str
+        CTM JSON string you wish to load
 
     Returns
     -------
         ModelData
     """
-    data = create_model_data_dict(ctm_filename)
+    data = create_model_data_dict(ctm_filename, ctm_json_str)
     return md.ModelData(data)
 
 def write_solution(model_data_wsol, ctm_sol_filename):
@@ -109,7 +111,7 @@ def ctmdata_2_model_data_dict(ctm):
     # return model data object created
     return model_data
 
-def create_model_data_dict(ctm_filename):
+def create_model_data_dict(ctm_filename=None, ctm_json_str=None):
     """
     Parse a CTM JSON file into a model_data dictionary
 
@@ -117,6 +119,8 @@ def create_model_data_dict(ctm_filename):
     ----------
     ctm_filename : str
         Path and filename of the CTM input file you wish to load
+    ctm_json_str : str
+        CTM JSON string you wish to load
 
     Returns
     -------
@@ -124,10 +128,18 @@ def create_model_data_dict(ctm_filename):
                object.
     """
     
-    # read CTM data file
-    # PENDING: reading time series in different files
-    ctm = ctmdata.parse(ctm_filename)   # this uses the auto generated pydantic data classes for
-                                        # validating the CTM JSON file
+    # check input: either ctm_filename or ctm_json_str must not be None, but not both
+    if (ctm_filename == None and ctm_json_str == None) or \
+       (ctm_filename != None and ctm_json_str != None):
+        raise Exception('either ctm_filename or ctm_json_str must not be None, but not both')
+    
+    if ctm_filename != None:
+        # read CTM data file
+        ctm = ctmdata.parse(ctm_filename)   # this uses the auto generated pydantic data classes for
+                                            # validating the CTM JSON file
+    else:
+        # read CTM data string
+        ctm = ctmdata.parse_obj_as(ctmdata.CtmData, ctmdata.json.loads(ctm_json_str))
     
     # call conversion function and return
     data = ctmdata_2_model_data_dict(ctm)
