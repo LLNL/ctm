@@ -1,0 +1,140 @@
+{
+    "datamaintainer": {
+        "invocation" : ["name"],
+        "invocation_types": ["string"],
+        "fields": ["ph", "email", "company", "location", "parent"],
+        "fields_types": ["string", "string", "string", "string", "string"]
+    },
+    "substation": {
+        "invocation" : ["st_no", "name"],
+        "invocation_types": ["int", "string"],
+        "fields": ["latitude", "longitude", "rdc"],
+        "fields_types": ["float", "float", "float"]
+    },
+    "bus": {
+        "invocation" : ["number", "name", "kV"],
+        "invocation_types": ["int", "string", "float"],
+        "fields": ["ty", "vs", "vt", "an", "ar", "z", "vma", "vmi", "d_in", "d_out", "proj_id", "level","owner", "stisol", "latitude", "longitude", "islnum", "sdmon", "vmax1", "vmin1", "dvmax", "subst_number", "subst_name"],
+        "fields_types": ["int", "float", "float", "float", "int", "int", "float", "float", "int", "int", "int", "int", "int", "int", "float", "float", "int", "int", "float", "float", "float", "int", "string"]
+    },
+    "branch": {
+        "invocation": ["f_bus", "f_name", "f_bkv", "t_bus", "t_name", "t_bkv", "ck", "sec", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "int", "string"],
+        "fields": ["st", "r", "x", "b", "r1", "r2", "r3", "r4", "al", "l", "ar", "z", "gi", "tf", "tt", "d_in", "d_out", "proj_id", "nst", "type", "r5", "r6", "r7", "r8", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8", "ohms"],
+        "fields_types": ["int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "float", "float", "float", "int", "int", "int", "int", "int", "float", "float", "float", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int"]
+    },
+    "transformer": {
+        "invocation": ["f_bus", "f_name", "f_bkv", "t_bus", "t_name", "t_bkv", "ck", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "string"],
+        "fields": ["st", "type", "kreg_bus", "kreg_name", "kreg_bkv", "zt", "iint_bus", "iint_name", "iint_bkv", "tert_bus", "tert_name", "tert_bkv", "area", "zone", "tbase", "zpsr", "zpsx", "zptr", "zptx", "ztsr", "ztsx", "vnomp", "vnoms", "vnomt", "anglp", "gmag", "bmag", "r1", "r2", "r3", "r4", "aloss", "tmax", "tmin", "vtmax", "vtmin", "stepp", "tapp", "tapfp", "tapfs", "tapft", "date_in", "date_out", "projid", "stn", "r5", "r6", "r7", "r8", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8", "ohms", "tbasept", "tbasets", "angls", "anglt", "rs1", "rs2", "rs3", "rt1", "rt2", "rt3", "alosss", "alosst", "rxunits", "gbunits", "tunits", "rcomp", "xcomp"],
+        "fields_types": ["int", "int", "int", "string", "float", "int", "int", "string", "float", "int", "string", "float", "int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "int", "float", "float", "float", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "float", "float"]
+    },
+    "generator": {
+        "invocation": ["bus", "name", "bkv", "id", "long_id"],
+        "invocation_types": ["int", "string", "float", "string", "string"],
+        "fields": ["st", "igreg_bus", "igreg_name", "igreg_bkv", "prf", "qrf", "ar", "z", "pgen", "pmax", "pmin", "qgen", "qmax", "qmin", "mbase", "rcomp", "xcomp", "zgenr", "zgenx", "h_bus", "h_name", "h_bkv", "t_bus", "t_name", "t_bkv", "d_in", "d_out", "proj_id", "snt", "rtr", "xtr", "gtap", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8", "gov_flag", "agc_flag", "dispatch_flag", "baseload_flag", "air_temp", "turbine_type", "qtab", "pmax2", "sdmon", "cont_mode", "pf"],
+        "fields_types": ["int", "int", "string", "float", "float", "float", "int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "string", "float", "int", "string", "float", "int", "int", "int", "int", "float", "float", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "int", "int", "int", "float", "int", "int", "float", "int", "int", "float"]
+    },
+    "load": {
+        "invocation": ["bus", "name", "bkv", "id", "long_id"],
+        "invocation_types": ["int", "string", "float", "string", "string"],
+        "fields": ["st", "p", "q", "ip", "iq", "g", "b", "ar", "z", "d_in", "d_out", "proj_id", "nst", "owner", "sdmon", "nonconf", "thrbus", "thrflag"],
+        "fields_types": ["int", "float", "float", "float", "float", "float", "float", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "string"]
+    },
+    "shunt": {
+        "invocation": ["fbus", "fname", "fbkv", "id", "tbus", "tname", "tbkv", "ck", "sec", "long_id"],
+        "invocation_types": ["int", "string", "float", "string", "int", "string", "float", "string", "int", "string"],
+        "fields": ["st", "ar", "z", "g", "b", "d_in", "d_out", "proj_id", "nst", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "svd_bus", "sname", "skv", "”idsvd”", "stsvd", "sdmon"],
+        "fields_types": ["int", "int", "int", "float", "float", "int", "int", "int", "int", "int", "float", "int", "float", "int", "float", "int", "float", "int", "string", "float", "string", "int", "int"]
+    },
+    "area": {
+        "invocation": [],
+        "invocation_types": [],
+        "fields": ["arnum", "arnam", "swing", "pnetdes", "pnettol", "pnet", "qnet"],
+        "fields_types": ["int", "string", "int", "float", "float", "float", "float"]
+    },
+    "zone": {
+        "invocation": [],
+        "invocation_types": [],
+        "fields": ["zonum", "zonam", "pznet", "qznet"],
+        "fields_types": ["int", "string", "float", "float"]
+    },
+    "interface": {
+        "invocation": [],
+        "invocation_types": [],
+        "fields": ["ifno", "name", "pnet", "qnet", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"],
+        "fields_types": ["int", "string", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float"]
+    },
+    "interface_branch": {
+        "invocation": ["f_bus", "f_name", "f_bkv", "t_bus", "t_name", "t_bkv", "ck"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string"],
+        "fields": ["ifn", "pf"],
+        "fields_types": ["int", "float"]
+    },
+    "dc_bus": {
+        "invocation": ["dc_bus", "busnam", "basekv"],
+        "invocation_types": ["int", "string", "float"],
+        "fields": ["ty", "ar", "z", "vsch", "vdc", "d_in", "d_out", "proj_id", "owner"],
+        "fields_types": ["int", "int", "int", "float", "float", "int", "int", "int", "int"]
+    },
+    "dc_line": {
+        "invocation": ["f_bus", "f_name", "f_bkv", "t_bus", "t_name", "t_bkv", "ck", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "string"],
+        "fields": ["st", "ar", "z", "r", "l", "c", "r1", "r2", "r3", "r4", "len", "aloss", "d_in", "d_out", "proj_id", "nst", "r5", "r6", "r7", "r8", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8"],
+        "fields_types": ["int", "int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "int", "float", "float", "float", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float"]
+    },
+    "dc_converter": {
+        "invocation": ["ac_bus", "ac_name", "ac_bkv", "dc_bus", "dc_name", "dc_bkv", "id", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "string"],
+        "fields": ["st", "ty", "md", "nbridge", "t_kreg", "r_bus", "r_name", "r_bkv", "ar", "z", "d_in", "d_out", "idc", "vdc", "pac", "qac", "p_sched", "i_sched", "v_sched", "i_margin", "rcomp", "vmin_pctl", "vmin_comm", "vac_base", "vdc_base", "alpa", "alpa_min", "alpa_max", "gama", "gama_min", "gama_max", "vdiode", "xcomm", "rtran", "xtran", "tran_base", "tapf_ac", "tapf_dc", "tap_ac", "tap_dc", "tmin", "tmax", "tstep", "vtmax", "vtmin", "aloss", "i_rate", "xsmooth", "proj_id", "nst", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8"],
+        "fields_types": ["int", "int", "int", "int", "int", "int", "string", "float", "int", "int", "int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float"]
+    },
+    "vs_converter": {
+        "invocation": ["ac_bus", "ac_name", "ac_bkv", "dc_bus", "dc_name", "dc_bkv", "id", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "string"],
+        "fields": ["st", "reg_bus", "reg_name", "reg_bkv", "ar", "z", "dc_mode", "ac_mode", "dcset", "acset", "aloss", "bloss", "minloss", "smax", "imax", "qmax", "qmin", "qrf", "pwf", "d_in", "d_out", "proj_id", "nst", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8", "type", "dcsys", "qmx", "qmn", "pdc", "idc", "pac", "qac"],
+        "fields_types": ["int", "int", "string", "float", "int", "int", "int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "int", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "int", "float", "float", "float", "float", "float", "float"]
+    },
+    "z_table": {
+        "invocation": [],
+        "invocation_types": [],
+        "fields": ["no", "field_2", "field_3", "ta", "t0", "f0", "t1", "f1", "t2", "f2", "t3", "f3", "t4", "f4", "t5", "f5", "t6", "f6", "t7", "f7", "t8", "f8", "t9", "f9", "t10", "f10"],
+        "fields_types": ["int", "string", "string", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float"]
+    },
+    "gcd": {
+        "invocation": ["f_bus", "f_name", "f_bkv", "t_bus", "t_name", "t_bkv", "ck", "sec", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "int", "string"],
+        "fields": ["st", "type", "pset", "ptol", "viset", "vjset", "vtol", "vsmax", "ismax", "ishmax", "pdcmax", "yth", "r", "x", "b", "svbase", "svabase", "pvbase", "pvabase", "accel", "aloss", "ar", "z", "pline", "qline", "vim", "vjm", "vsm", "vsa", "qs", "pdc", "qshunt", "ishunt", "vmr", "vmi", "vmm", "vma", "cmr", "cmi", "psang", "angmax", "vtap", "vtmax", "vtmin", "itran", "igen", "alim", "tlim", "d_in", "d_out", "proj_id", "nst", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4"],
+        "fields_types": ["int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "int", "int", "int", "int", "int", "int", "float", "int", "float", "int", "float", "int", "float"]
+    },
+    "transaction": {
+        "invocation": ["fr_no", "fr_id", "ftype", "to_no", "to_id", "ttype"],
+        "invocation_types": ["int", "string", "string", "int", "string", "string"],
+        "fields": ["st", "sch_mw", "sch_mva", "flag", "nst", "proj_id", "name"],
+        "fields_types": ["int", "float", "float", "string", "int", "int", "string"]
+    },
+    "owner": {
+        "invocation": ["owner_no", "oname", "s_name"],
+        "invocation_types": ["int", "string", "string"],
+        "fields": ["net_mw", "net_mvar", "sch_mw", "sch_mvar", "ar"],
+        "fields_types": ["float", "float", "float", "float", "int"]
+    },
+    "motor": {
+        "invocation": ["bus", "name", "bkv", "id", "long_id"],
+        "invocation_types": ["int", "string", "float", "string", "string"],
+        "fields": ["st", "ar", "z", "owner", "flag", "type", "mbase", "p", "q", "pf", "ls", "tp0", "lp", "tpp0", "lpp", "ra", "h", "rt", "lt", "bcap", "zppr", "zppx", "alt0", "alt1", "blt1", "alt2", "blt2", "d_in", "d_out", "proj_id", "nst"],
+        "fields_types": ["int", "int", "int", "int", "string", "string", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "int", "int", "int", "int"]
+    },
+    "line": {
+        "invocation": ["f_bus", "f_name", "f_bkv", "t_bus", "t_name", "t_bkv", "ck", "sec", "long_id"],
+        "invocation_types": ["int", "string", "float", "int", "string", "float", "string", "int", "string"],
+        "fields": ["st", "p_name", "len", "ws1", "cond1", "ws2", "cond2", "ws3", "cond3", "ws4", "cond4", "ws5", "cond5", "ar", "z", "ncb", "rating", "d_in", "d_out", "proj_id", "nst", "o1", "p1", "o2", "p2", "o3", "p3", "o4", "p4", "o5", "p5", "o6", "p6", "o7", "p7", "o8", "p8", "r", "x", "b", "r0", "x0", "b0", "a0", "a1", "a2", "a3", "a4", "al"],
+        "fields_types": ["int", "string", "float", "int", "string", "int", "string", "int", "string", "int", "string", "int", "string", "int", "int", "int", "float", "int", "int", "int", "int", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "int", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float", "float"]
+    },
+    "ba": {
+        "invocation": [],
+        "invocation_types": [],
+        "fields": ["ar_no", "aname", "swing", "desired", "tol", "pnet", "qnet"],
+        "fields_types": ["int", "string", "float", "float", "float", "float", "float"]
+    }
+}
