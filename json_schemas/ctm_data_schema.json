@@ -1012,11 +1012,11 @@
                                 }
                             },
                             "g": {
-                                "description": "[S or pu] shunt conductance of transformer at internal star node (magnetizing branch)",
+                                "description": "[S or pu] shunt conductance of transformer at internal star node (magnetizing branch); if in pu use primary as base voltage",
                                 "type": "number"
                             },
                             "b": {
-                                "description": "[S or pu] shunt susceptance of transformer at internal star node (magnetizing branch)",
+                                "description": "[S or pu] shunt susceptance of transformer at internal star node (magnetizing branch); if in pu use primary as base voltage",
                                 "type": "number"
                             },
                             "tm_lb_w": {

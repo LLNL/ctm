@@ -91,7 +91,7 @@ def ctmdata_2_model_data_dict(ctm):
         system['reference_bus'] = str(ctm.network.global_params.bus_ref)
     system['reference_bus_angle'] = 0.0
     
-    # parse data
+    # parse data with one-to-one correspondance from CTM to MD
     elements['area'] = ctm_name_only_to_md(ctm.network.area)
     elements['zone'] = ctm_name_only_to_md(ctm.network.zone)
     elements['bus'] = ctm_bus_to_md(ctm.network.bus, elements)
@@ -107,6 +107,15 @@ def ctmdata_2_model_data_dict(ctm):
                                                     system, elements))
     elements['dc_branch'] = ctm_hvdc_p2p_to_md(ctm.network.hvdc_p2p, ctm.time_series_data,
                                                system, elements)
+    
+    # parse multiple winding transformers
+    mwtrf_bus, mwtrf_branch = \
+        ctm_multiple_winding_transformer_to_md(ctm.network.multiple_winding_transformer,
+                                               ctm.time_series_data, system, elements)
+    elements['bus'].update(mwtrf_bus)
+    elements['branch'].update(mwtrf_branch)
+    del mwtrf_bus
+    del mwtrf_branch
     
     # return model data object created
     return model_data
@@ -170,6 +179,7 @@ def extract_uc_solution(model_data_wsol) :
                                     'bus': [],
                                     'gen': [],
                                     'transformer': [],
+                                    'multiple_winding_transformer': [],
                                     'hvdc_p2p': []
                                 },
                     'time_series_data': {
@@ -195,6 +205,10 @@ def extract_uc_solution(model_data_wsol) :
     extract_uc_solution_transformer(model_data_wsol.data['elements']['branch'],
                                     ctm_sol_dict['solution']['transformer'],
                                     ctm_sol_dict['time_series_data'])
+    extract_uc_solution_multiple_winding_transformer(model_data_wsol.data['elements']['bus'],
+                                                     model_data_wsol.data['elements']['branch'],
+                                                     ctm_sol_dict['solution']['multiple_winding_transformer'],
+                                                     ctm_sol_dict['time_series_data'])
     extract_uc_solution_hvdc_p2p(model_data_wsol.data['elements']['dc_branch'],
                                  ctm_sol_dict['solution']['hvdc_p2p'],
                                  ctm_sol_dict['time_series_data'], mva2pu)
@@ -401,8 +415,7 @@ def none_if_zero(x):
     return x
 
 def get_common_branch_dict(elem, ctm_ts_data, md_system, md_elems):
-    return { 'branch_type' : 'line',
-             'in_service' : ((elem.status == 1) and \
+    return { 'in_service' : ((elem.status == 1) and \
                              md_elems['bus'][str(elem.bus_fr)]['in_service'] and \
                              md_elems['bus'][str(elem.bus_to)]['in_service']),
              'from_bus' : str(elem.bus_fr),
@@ -422,6 +435,7 @@ def ctm_ac_line_to_md(ctm_ac_line, ctm_ts_data, md_system, md_elems):
     out = {}
     for elem in ctm_ac_line :
         elem_dict = get_common_branch_dict(elem, ctm_ts_data, md_system, md_elems)
+        elem_dict['branch_type'] = 'line'
         elem_dict['charging_susceptance'] = elem.b_fr + elem.b_to
         elem_dict['angle_diff_min'] = elem.vad_lb
         elem_dict['angle_diff_max'] = elem.vad_ub
@@ -434,13 +448,17 @@ def ctm_transformer_to_md(ctm_transformer, ctm_ts_data, md_system, md_elems):
     out = {}
     for elem in ctm_transformer:
         elem_dict = get_common_branch_dict(elem, ctm_ts_data, md_system, md_elems)
+        elem_dict['branch_type'] = 'transformer'
         elem_dict['charging_susceptance'] = elem.b
         elem_dict['angle_diff_min'] = None
         elem_dict['angle_diff_max'] = None
-        elem_dict['transformer_tap_ratio'] = .5 * elem.tm_lb + .5 * elem.tm_ub
+        if elem.tm_lb == None or elem.tm_ub == None:
+            elem_dict['transformer_tap_ratio'] = 1.0
+        else:
+            elem_dict['transformer_tap_ratio'] = .5 * elem.tm_lb + .5 * elem.tm_ub
         # NOTE: phase shift should be optimized, but EGRET currently does not do that
-        if elem.ta_lb == None :
-            elem_dict['transformer_phase_shift'] = 0.
+        if elem.ta_lb == None or elem.ta_ub == None:
+            elem_dict['transformer_phase_shift'] = 0.0
         else:
             elem_dict['transformer_phase_shift'] = 0.5 * elem.ta_lb + 0.5 * elem.ta_ub
         out[str(elem.uid)] = elem_dict
@@ -464,8 +482,74 @@ def ctm_hvdc_p2p_to_md(ctm_hvdc_p2p, ctm_ts_data, md_system, md_elems):
         out[str(elem.uid)] = elem_dict
     return out
 
+MWTRF_KEY_MARKER = ':*-|'
 
-def no_filter(obj):
+def make_star_key(elem_uid):
+    return MWTRF_KEY_MARKER + 'MWTRF_STAR' + MWTRF_KEY_MARKER[::-1] + str(elem_uid)
+
+def make_winding_key(elem_uid, num_winding):
+    return MWTRF_KEY_MARKER + 'MWTRF_WINDING_' + str(num_winding) + MWTRF_KEY_MARKER[::-1] + str(elem_uid)
+
+def ctm_multiple_winding_transformer_to_md(ctm_mwtrf, ctm_ts_data, md_system, md_elems):
+    if 'bus' not in md_elems:
+        raise Exception('transformer parser can only be called after bus parser')
+    mwtrf_bus = {}
+    mwtrf_branch = {}
+    if ctm_mwtrf is None:
+        return mwtrf_bus, mwtrf_branch
+    for elem in ctm_mwtrf:
+        # collect transformer buses
+        elem_buses = [md_elems['bus'][str(i)] for i in elem.bus_w]
+        # create star bus
+        star_key = make_star_key(elem.uid)
+        star_base_kv = sum(elem_buses[i] for i in range(elem.num_windings))/elem.num_windings
+        mwtrf_bus[star_key] = \
+                    { 'in_service' : ((elem.status == 1) and \
+                                      md_elems['area'][elem_buses[0]['area']]['in_service']),
+                      'base_kv' : star_base_kv,
+                      'area' : elem_buses[0]['area'],
+                      'zone' : elem_buses[0]['zone'] }
+        for i in range(elem.num_windings):
+            elem_i_dict = \
+                { 'branch_type' : 'transformer',
+                  'in_service' : ((elem.status == 1) and \
+                                  (elem.status_w[i] == 1) and \
+                                  elem_buses[i]['in_service'] and \
+                                  md_elems['area'][elem_buses[0]['area']]['in_service']),
+                  'from_bus' : str(elem.bus_w[i]),
+                  'to_bus' : star_key,
+                  'resistance' : elem.r_w[i],
+                  'reactance' : elem.x_w[i],
+                  'angle_diff_min' : None,
+                  'angle_diff_max' : None,
+                  'rating_long_term' : \
+                        none_if_zero(get_ctm_limit(elem.sm_ub_a_w[i], ctm_ts_data, md_system)),
+                  'rating_short_term' : \
+                        none_if_zero(get_ctm_limit(elem.sm_ub_b_w[i], ctm_ts_data, md_system)),
+                  'rating_emergency' : \
+                        none_if_zero(get_ctm_limit(elem.sm_ub_c_w[i], ctm_ts_data, md_system)) }
+            if i == 0:
+                # NOTE: putting charging at primary; this is an approximation of CTM definition, but
+                # does not affect problems based on DC power flows. For AC, a fully equivalent
+                # circuit with charging only at the 'from' side of every winding can be constructed
+                # using delta-wye transformations.
+                elem_i_dict['charging_susceptance'] = elem.b
+            else:
+                elem_i_dict['charging_susceptance'] = 0.0
+            if elem.tm_lb_w[i] == None or elem.tm_ub_w[i] == None:
+                elem_i_dict['transformer_tap_ratio'] = 1.0
+            else:
+                elem_i_dict['transformer_tap_ratio'] = .5 * elem.tm_lb_w[i] + .5 * elem.tm_ub_w[i]
+            # NOTE: phase shift should be optimized, but EGRET currently does not do that
+            if elem.ta_lb_w[i] == None or elem.ta_ub[i] == None:
+                elem_i_dict['transformer_phase_shift'] = 0.0
+            else:
+                elem_i_dict['transformer_phase_shift'] = 0.5 * elem.ta_lb_w[i] + 0.5 * elem.ta_ub_w[i]
+            mwtrf_branch[make_winding_key(elem.uid, i)] = elem_i_dict
+    # return all elements collected
+    return mwtrf_bus, mwtrf_branch
+
+def no_filter(k, obj):
     return True
 
 def no_scale(obj):
@@ -481,7 +565,7 @@ def extract_uc_solution_elem(mddata, sol_dict, ts_dict,
     if len(md_ts_keys) != len(ctm_ts_keys) or len(ctm_ts_keys) != len(scale_ts):
         raise Exception('inconsistent length for time series fields')
     for k, v in mddata.items():
-        if not filter_func(v):
+        if not filter_func(k, v):
             continue
         elem_dict = dict()
         elem_dict['uid'] = k
@@ -509,17 +593,26 @@ def extract_uc_solution_elem(mddata, sol_dict, ts_dict,
                                         }
         sol_dict.append(elem_dict)
 
+def filter_not_derived_from_mwtrf(key, obj_dict):
+    if not isinstance(obj_dict, dict):
+        raise Exception('unexpected non dict type')
+    return not key.startswith(MWTRF_KEY_MARKER + 'MWTRF_')
+
+def filter_derived_from_mwtrf(key, obj_dict):
+    return not filter_not_derived_from_mwtrf(key, obj_dict)
+
 def extract_uc_solution_bus(mddata, sol_dict, ts_dict):
     extract_uc_solution_elem(mddata, sol_dict, ts_dict,
                              [], [], [],
-                             ['va'], ['va'], [False])
+                             ['va'], ['va'], [False],
+                             no_scale, filter_not_derived_from_mwtrf)
 
-def filter_not_renewable(obj_dict):
+def filter_not_renewable(key, obj_dict):
     if not isinstance(obj_dict, dict):
         raise Exception('unexpected non dict type')
     return obj_dict['generator_type'] != 'renewable'
 
-def filter_renewable(obj_dict):
+def filter_renewable(key, obj_dict):
     if not isinstance(obj_dict, dict):
         raise Exception('unexpected non dict type')
     return obj_dict['generator_type'] == 'renewable'
@@ -536,10 +629,13 @@ def extract_uc_solution_gen(mddata, sol_dict, ts_dict, scale_func=no_scale):
                              scale_func,
                              filter_renewable)
 
-def filter_transformers(obj_dict):
+def filter_transformers(key, obj_dict):
     if not isinstance(obj_dict, dict):
         raise Exception('unexpected non dict type')
-    return obj_dict['branch_type'] == 'transformer'
+    if obj_dict['branch_type'] == 'transformer':
+        return filter_not_derived_from_mwtrf(key, obj_dict)
+    else:
+        return False
 
 def extract_uc_solution_transformer(mddata, sol_dict, ts_dict):
     extract_uc_solution_elem(mddata, sol_dict, ts_dict,
@@ -555,3 +651,51 @@ def extract_uc_solution_hvdc_p2p(mddata, sol_dict, ts_dict, scale_func=no_scale)
                              scale_func)
     for i in range(len(ts_dict['values'][-1])):
         ts_dict['values'][-1][i] = -1.0 * ts_dict['values'][-1][i]   
+
+def filter_mtrf_windings(key, obj_dict):
+    if not isinstance(obj_dict, dict):
+        raise Exception('unexpected non dict type')
+    if obj_dict['branch_type'] == 'transformer':
+        return filter_derived_from_mwtrf(key, obj_dict)
+    else:
+        return False
+
+def extract_mwtrf_uid(star_bus_uid: str):
+    uid_len = len(star_bus_uid) - (len('MWTRF_STAR') + 2 * len(MWTRF_KEY_MARKER))
+    return star_bus_uid[-uid_len:]
+
+def extract_uc_solution_multiple_winding_transformer(mddata_bus, mddata_branch, sol_arr, ts_dict):
+    # go over buses, generating time series for all those that were generated from multiple
+    # winding transformers
+    mwtrf_star_sol = []
+    extract_uc_solution_elem(mddata_bus, mwtrf_star_sol, ts_dict,
+                             [], [], [],
+                             ['va'], ['va'], [False],
+                             no_scale, filter_derived_from_mwtrf)
+    # go over transformers, generating time series for all those that were generated from multiple
+    # winding transformers
+    mwtrf_winding_sol = []
+    extract_uc_solution_elem(mddata_branch, mwtrf_winding_sol, ts_dict,
+                             ['transformer_phase_shift'], ['ta'], [False],
+                             [], [], [],
+                             no_scale,
+                             filter_mtrf_windings)
+    # fill array of multiple winding transformers
+    key_idx_map = {}
+    for i, elem in enumerate(mwtrf_winding_sol):
+        key_idx_map[elem['uid']] = i
+    for elem in mwtrf_star_sol:
+        elem_dict = dict()
+        elem_dict['uid'] = extract_mwtrf_uid(elem['uid'])
+        elem_dict['va_star_node'] = elem['va']
+        elem_dict['ta_w'] = []
+        i = 0
+        while True:
+            winding_key = make_winding_key(elem_dict['uid'], i)
+            if winding_key not in key_idx_map:
+                break
+            elem_dict['ta_w'].append(mwtrf_winding_sol[key_idx_map[winding_key]]['ta'])
+            i += 1
+        assert i >= 4, 'multi-winding transformer with uid=' + elem_dict['uid'] + \
+                       ' has ' + str(i) + ' windings after re-construction.'
+        sol_arr.append(elem_dict)
