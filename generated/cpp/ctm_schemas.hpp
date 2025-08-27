@@ -89,7 +89,7 @@ namespace ctm_schemas {
     }
     #endif
 
-    using BusFr = std::variant<int64_t, std::string>;
+    using BusRefElement = std::variant<int64_t, std::string>;
 
     /**
      * structure to hold a reference (possibly, to be scaled) to a time series
@@ -102,7 +102,7 @@ namespace ctm_schemas {
         /**
          * uid of time series (in time_series_data) this reference points to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     using CmUbA = std::variant<CmUbAClass, double>;
@@ -122,11 +122,11 @@ namespace ctm_schemas {
         /**
          * uid of bus at the from terminal of ac line
          */
-        BusFr bus_fr;
+        BusRefElement bus_fr;
         /**
          * uid of bus at the to terminal of ac line
          */
-        BusFr bus_to;
+        BusRefElement bus_to;
         /**
          * [kA or pu] persistent current rating
          */
@@ -191,7 +191,7 @@ namespace ctm_schemas {
          * reconnectors)
          */
         std::optional<double> transient_outage_rate;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [deg] voltage angle difference lower bound (stability)
          */
@@ -224,7 +224,7 @@ namespace ctm_schemas {
          * within area should be omitted); 1=>included, 0=>omitted
          */
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     enum class TypeEnum : int { PQ, PV, SLACK };
@@ -240,7 +240,7 @@ namespace ctm_schemas {
         /**
          * uid for area to which bus belongs to
          */
-        std::optional<BusFr> area;
+        std::optional<BusRefElement> area;
         /**
          * bus base (nominal) voltage
          */
@@ -258,7 +258,7 @@ namespace ctm_schemas {
          * bus type for power flow calculations (PV, PQ, or slack)
          */
         std::optional<TypeUnion> type;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * bus voltage lower bound
          */
@@ -270,7 +270,1549 @@ namespace ctm_schemas {
         /**
          * uid for zone to which bus belongs to
          */
-        std::optional<BusFr> zone;
+        std::optional<BusRefElement> zone;
+    };
+
+    /**
+     * class of dynamic model, e.g., machine, excitation, etc.
+     */
+    enum class Category : int { EXCITER, MACHINE, PRIME_MOVER, STABILIZER, WIND_TURBINE };
+
+    using DynamicAndControlGen = std::variant<std::vector<BusRefElement>, int64_t, std::string>;
+
+    using KA = std::variant<double, int64_t>;
+
+    /**
+     * type of dynamic model in this record
+     */
+    enum class Model : int { ESAC1_A, ESAC6_A, ESDC1_A, ESDC2_A, ESST4_B, EXAC1, EXAC2, EXPIC1, GAST, GENROU, GENSAL, GGOV1, HYGOV, IEEEG1, IEEEST, IEEET1, REEC_A, REGC_A, REPC_A, REPC_B, SCRX, SEXS, TGOV1, WTGA_A, WTGP_A, WTGQ_A, WTGT_A };
+
+    /**
+     * type of monitored branch
+     */
+    enum class MonitoredBranchType : int { AC_LINE, HVDC_P2_P, TRASFORMER };
+
+    using Bs = std::variant<std::vector<double>, double>;
+
+    /**
+     * genrou model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Machine%20Model%20GENROU.htm
+     *
+     * gensal model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Machine%20Model%20GENSAL.htm
+     *
+     * esac1a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESAC1A.htm
+     *
+     * esac6a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESAC6A.htm
+     *
+     * esdc1a or esdc2a model record; esdc1a:
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESDC1A.htm;
+     * esdc2a:
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESDC2A.htm
+     *
+     * esst4b model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESST4B.htm
+     *
+     * exac1 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20EXAC1.htm
+     *
+     * exac2 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20EXAC2.htm
+     *
+     * expic1 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20EXPIC1.htm
+     *
+     * ieeet1 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20IEEET1.htm
+     *
+     * scrx model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20SCRX.htm
+     *
+     * sexs model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20SEXS_GE.htm
+     *
+     * gast model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Governor%20GAST_GE.htm
+     *
+     * ggov1 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Governor%20GGOV1%20and%20GGOV1D.htm
+     *
+     * hygov model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Governor%20HYGOV%20and%20HYGOVD.htm
+     *
+     * ieeeg1 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Governor%20IEEEG1,%20IEEEG1D%20and%20IEEEG1_GE.htm
+     *
+     * tgov1 model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Governor%20TGOV1%20and%20TGOV1D.htm
+     *
+     * ieeest model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Stabilizer%20IEEEST.htm
+     *
+     * wtga_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Aerodynamic%20Model%20WTGAR_A.htm
+     *
+     * wtgp_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Stabilizer%20WTGPT_A.htm
+     * (WTPTA1)
+     *
+     * wtgq_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Pref%20Controller%20WTGTRQ_A.htm
+     * (WTGTQ_A)
+     *
+     * wtgt_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Governor%20WTGT_A.htm
+     *
+     * regc_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Machine%20Model%20REGC_A.htm
+     *
+     * reec_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20REEC_A.htm
+     *
+     * repc_a model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Plant%20Controller%20REPC_A.htm
+     *
+     * repc_b model record; see
+     * https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Plant%20Controller%20REPC_B.htm
+     */
+    struct DynamicAndControl {
+        /**
+         * class of dynamic model, e.g., machine, excitation, etc.
+         */
+        Category category;
+        /**
+         * [p.u.] Damping factor
+         */
+        std::optional<double> d;
+        std::optional<DynamicAndControlGen> gen;
+        /**
+         * [second] Inertia constant
+         */
+        std::optional<double> h;
+        /**
+         * [p.u.] Stator leakage reactance
+         */
+        std::optional<double> l_1;
+        /**
+         * [p.u.] D-axis synchronous reactance
+         */
+        std::optional<double> l_d;
+        /**
+         * [p.u.] D-axis transient reactance
+         */
+        std::optional<double> l_pd;
+        /**
+         * [p.u.] D-axis sub-transient reactance
+         */
+        std::optional<double> l_ppd;
+        /**
+         * [p.u.] Q-axis transient reactance
+         */
+        std::optional<double> l_pq;
+        /**
+         * [p.u.] Q-axis synchronous reactance
+         */
+        std::optional<double> l_q;
+        /**
+         * type of dynamic model in this record
+         */
+        Model model;
+        /**
+         * [p.u.] Stator resistance
+         */
+        std::optional<double> r_a;
+        /**
+         * [p.u.] Compounding resistance for voltage control
+         */
+        std::optional<double> r_comp;
+        /**
+         * [none] Saturation factor at 1 pu flux
+         */
+        std::optional<double> s_1;
+        /**
+         * [none] Saturation factor at 1.2 pu flux
+         */
+        std::optional<double> s_12;
+        /**
+         * [second] D-axis transient rotor time constant
+         */
+        std::optional<double> t_pdo;
+        /**
+         * [second] D-axis sub-transient rotor time constant
+         */
+        std::optional<double> t_ppdo;
+        /**
+         * [second] Q-axis sub-transient rotor time constant
+         */
+        std::optional<double> t_ppqo;
+        /**
+         * [second] Q-axis transient rotor time constant
+         */
+        std::optional<double> t_pqo;
+        BusRefElement uid;
+        /**
+         * [p.u.] Compounding reactance for voltage control
+         */
+        std::optional<double> x_comp;
+        /**
+         * [none] Field voltage value, 1
+         *
+         * [p.u.] Field voltage value, 1
+         */
+        std::optional<double> e_1;
+        /**
+         * [none] Field voltage value, 2
+         *
+         * [p.u.] Field voltage value, 2
+         */
+        std::optional<double> e_2;
+        /**
+         * [none] AVR gain (> 0.)
+         *
+         * [none] Gain (> 0.)
+         *
+         * [p.u.] Gain
+         *
+         * [none] Voltage regulator gain (> 0)
+         *
+         * [none] PI controller gain
+         *
+         * [none] Governor gain
+         *
+         * [none] Acceleration limiter Gain
+         *
+         * [none] Aerodynamic gain factor
+         */
+        std::optional<KA> k_a;
+        /**
+         * [p.u.] Rectifier regulation factor
+         *
+         * [p.u.] Exciter regulation factor
+         *
+         * [none] PI controller gain (>0, if Tc >0.)
+         *
+         * [p.u.] Droop gain
+         */
+        std::optional<double> k_c;
+        /**
+         * [p.u.] Exciter internal reactance
+         */
+        std::optional<double> k_d;
+        /**
+         * [p.u.] Exciter field resistance constant
+         *
+         * [p.u.] Exciter field resistance line slope margin
+         *
+         * [none] Exciter constant
+         */
+        std::optional<double> k_e;
+        /**
+         * [p.u.] Rate feedback gain
+         *
+         * [none] Rate feedback gain
+         */
+        std::optional<double> k_f;
+        /**
+         * [none] Saturation factor at E1
+         */
+        std::optional<double> s_e1;
+        /**
+         * [none] Saturation factor at E2
+         */
+        std::optional<double> s_e2;
+        /**
+         * [none] If = 1, multiply output (Efd) by generator speed.
+         *
+         * [none] If not 0, multiply output (Efd) by generator speed
+         *
+         * [none] If=1, multiply output (Efd) by generator speed
+         */
+        std::optional<double> spdmlt;
+        /**
+         * [second] AVR time constant (> 0.)
+         *
+         * [second] Time constant
+         *
+         * [second] Time constant (> 0.)
+         *
+         * [second] AVR time constant
+         *
+         * [second] Voltage regulator time constant (> 0.)
+         *
+         * [second] Time constant (> 0)
+         *
+         * [second] Voltage regulator time constant (> 0)
+         *
+         * [second] Acceleration limiter time constant (> 0.)
+         */
+        std::optional<double> t_a;
+        /**
+         * [second] TGR lag time constant
+         *
+         * [second] Time constant
+         *
+         * [second] Lag time constant
+         *
+         * [second] Lead-lag denominator time constant
+         *
+         * [second] Denominator time constant of lag-lead block
+         *
+         * [second] Turbine lag time constant (> 0.)
+         */
+        std::optional<double> t_b;
+        /**
+         * [second] TGR lead time constant
+         *
+         * [second] Lead time constant
+         *
+         * [second] Lead-lag numerator time constant
+         *
+         * [second] Time constant
+         *
+         * [second] PI controller phase lead time constant
+         *
+         * [second] Turbine lead time constant
+         */
+        std::optional<double> t_c;
+        /**
+         * [second] Exciter time constant (> 0.)
+         *
+         * [second] Exciter time constant
+         *
+         * [second] Exciter field time constant (> 0.)
+         *
+         * [second] Time constant of gain block (>0)
+         */
+        std::optional<double> t_e;
+        /**
+         * [second] Rate feedback time constant (> 0.)
+         *
+         * [second] Rate feedback time constant
+         *
+         * [second] Filter time constant
+         */
+        std::optional<double> t_f;
+        /**
+         * [second] Filter time constant
+         *
+         * [second] Voltage transducer time constant
+         *
+         * [second] Transducer time constant
+         *
+         * [second] Washout time constant
+         */
+        std::optional<double> t_r;
+        /**
+         * [p.u.] Maximum AVR output
+         *
+         * [p.u.] Maximum controller element output
+         *
+         * [p.u.] Maximum control element output
+         */
+        std::optional<double> va_max;
+        /**
+         * [p.u.] Minimum AVR output
+         *
+         * [p.u.] Minimum controller element output
+         *
+         * [p.u.] Minimum control element output
+         */
+        std::optional<double> va_min;
+        /**
+         * [p.u.] Maximum exciter control signal
+         *
+         * [p.u.] Maximum controller output
+         *
+         * [p.u.] Maximum AVR output
+         *
+         * [p.u.] Voltage regulator maximum output
+         *
+         * [p.u.] Voltage regulator maximum limit
+         *
+         * [p.u.] Maximum control element output
+         */
+        std::optional<double> vr_max;
+        /**
+         * [p.u.] Minimum exciter control signal
+         *
+         * [p.u.] Minimum controller output
+         *
+         * [p.u.] Minimum AVR output
+         *
+         * [p.u.] Voltage regulator minimum output
+         *
+         * [p.u.] Voltage regulator minimum limit
+         *
+         * [p.u.] Minimum control element output
+         */
+        std::optional<double> vr_min;
+        /**
+         * [p.u.] Exciter field current limiter gain
+         *
+         * [p.u.] Exciter field current feedback gain
+         */
+        std::optional<double> k_h;
+        /**
+         * [second] Field current limiter time constant (> 0.)
+         */
+        std::optional<double> t_h;
+        /**
+         * [second] Field current limiter time constant
+         */
+        std::optional<double> t_j;
+        /**
+         * [second] Lag time constant
+         */
+        std::optional<double> t_k;
+        /**
+         * [p.u.] Exciter field current limit reference
+         */
+        std::optional<double> vfe_lim;
+        /**
+         * [p.u.] Maximum field current limiter signal
+         */
+        std::optional<double> vh_max;
+        /**
+         * [none] If not 0, apply lower limit of 0. to exciter output
+         */
+        std::optional<double> exclim;
+        /**
+         * [none] UEL input: if < 2, HV gate; if = 2, add to error signal
+         */
+        std::optional<double> uelin;
+        /**
+         * [degree] Phase angle (theta_p) of potential source
+         */
+        std::optional<double> ang_p;
+        /**
+         * [p.u.] Inner loop feedback gain
+         */
+        std::optional<double> k_g;
+        /**
+         * [p.u.] Current source gain
+         *
+         * [p.u.] Integral gain
+         */
+        std::optional<double> k_i;
+        /**
+         * [p.u.] Integral gain of inner loop regulator
+         */
+        std::optional<double> k_im;
+        /**
+         * [p.u.] AVR Integral Gain
+         */
+        std::optional<double> k_ir;
+        /**
+         * [p.u.] Potential source gain
+         *
+         * [p.u.] Potential source gain (> 0.)
+         *
+         * [p.u.] Proportional gain
+         */
+        std::optional<double> k_p;
+        /**
+         * [p.u.] Prop. gain of inner loop regulator
+         */
+        std::optional<double> k_pm;
+        /**
+         * [p.u.] AVR proportional Gain
+         */
+        std::optional<double> k_pr;
+        /**
+         * [p.u.] Maximum excitation voltage
+         */
+        std::optional<double> vb_max;
+        /**
+         * [p.u.] Maximum inner loop feedback gain
+         */
+        std::optional<double> vg_max;
+        /**
+         * [p.u.] Maximum inner loop regulator output
+         */
+        std::optional<double> vm_max;
+        /**
+         * [p.u.] Minimum inner loop regulator output
+         */
+        std::optional<double> vm_min;
+        /**
+         * [p.u.] P-bar leakage reactance
+         */
+        std::optional<double> x_l;
+        /**
+         * [none] Exciter field current controller gain
+         */
+        std::optional<double> k_b;
+        /**
+         * [p.u.] Exciter field current limiter gain
+         */
+        std::optional<double> k_l;
+        /**
+         * [p.u.] Maximum exciter field current
+         */
+        std::optional<double> v_lr;
+        /**
+         * [p.u.] Exciter maximum limit
+         *
+         * [p.u.] Field voltage clipping limit
+         */
+        std::optional<double> efd_max;
+        /**
+         * [p.u.] Exciter minimum limit
+         *
+         * [p.u.] Field voltage clipping limit
+         */
+        std::optional<double> efd_min;
+        /**
+         * [second] PI controller time constant
+         */
+        std::optional<double> t_a1;
+        /**
+         * [second] Voltage regulator time constant
+         */
+        std::optional<double> t_a2;
+        /**
+         * [second] Lead time constant
+         */
+        std::optional<double> t_a3;
+        /**
+         * [second] Lag time constant
+         */
+        std::optional<double> t_a4;
+        /**
+         * [second] Rate feedback time constant
+         */
+        std::optional<double> t_f1;
+        /**
+         * [second] Rate feedback lag time constant
+         */
+        std::optional<double> t_f2;
+        /**
+         * [p.u.] PI maximum limit
+         */
+        std::optional<double> v_r1;
+        /**
+         * [p.u.] PI minimum limit
+         */
+        std::optional<double> v_r2;
+        /**
+         * [none] Required entry of zero
+         */
+        std::optional<double> s_pare;
+        /**
+         * [none] Power source switch: 1 = fixed ac voltage; 0 = generator terminal voltage
+         */
+        std::optional<int64_t> c_switch;
+        /**
+         * [p.u.] Maximum field voltage output
+         *
+         * [p.u.] Maximum error limit
+         */
+        std::optional<double> e_max;
+        /**
+         * [p.u.] Minimum field voltage output
+         *
+         * [p.u.] Minimum error limit
+         */
+        std::optional<double> e_min;
+        /**
+         * [none] Gain (>0)
+         *
+         * [p.u.] Governor gain (reciprocal of droop)
+         */
+        std::optional<double> k;
+        /**
+         * [none] Rc/Rfd - ratio of field discharge resistance to field winding resistance
+         */
+        std::optional<double> r_crfd;
+        /**
+         * [none] Ta/Tb - gain reduction ratio of lag-lead element
+         */
+        std::optional<double> t_atb;
+        /**
+         * [none] Turbine power time constant numerator scale factor
+         */
+        std::optional<double> a;
+        /**
+         * [none] Turbine power time constant denominator scale factor
+         */
+        std::optional<double> b;
+        /**
+         * [p.u.] Turbine damping coefficient
+         *
+         * [p.u.] Turbine damping factor
+         */
+        std::optional<double> d_turb;
+        /**
+         * [Hz] Intentional deadband width
+         *
+         * [p.u.] Deadband in voltage error
+         */
+        std::optional<double> db1;
+        /**
+         * [MW] Unintentional deadband
+         *
+         * [p.u.] Deadband in voltage error
+         */
+        std::optional<double> db2;
+        /**
+         * [Hz] Intentional db hysteresis
+         */
+        std::optional<double> eps;
+        /**
+         * [p.u.] Fuel flow at zero power output
+         */
+        std::optional<double> f_idle;
+        /**
+         * [p.u. gv] Nonlinear gain point 1
+         */
+        std::optional<double> g_v1;
+        /**
+         * [p.u. gv] Nonlinear gain point 2
+         */
+        std::optional<double> g_v2;
+        /**
+         * [p.u. gv] Nonlinear gain point 3
+         */
+        std::optional<double> g_v3;
+        /**
+         * [p.u. gv] Nonlinear gain point 4
+         */
+        std::optional<double> g_v4;
+        /**
+         * [p.u. gv] Nonlinear gain point 5
+         */
+        std::optional<double> g_v5;
+        /**
+         * [p.u. gv] Nonlinear gain point 6
+         */
+        std::optional<double> g_v6;
+        /**
+         * [none] Temperature limiter gain
+         */
+        std::optional<double> k_t;
+        /**
+         * [none] Ambient temperature load limit
+         */
+        std::optional<double> l_max;
+        /**
+         * [p.u.] Valve position change allowed at fast rate
+         */
+        std::optional<double> l_oadinc;
+        /**
+         * [p.u./second] Maximum long term fuel valve opening rate
+         */
+        std::optional<double> lt_rate;
+        /**
+         * [MW] Turbine Rating
+         */
+        std::optional<double> mw_cap;
+        /**
+         * [p.u. power] Nonlinear gain point 1
+         */
+        std::optional<double> p_gv1;
+        /**
+         * [p.u. power] Nonlinear gain point 2
+         */
+        std::optional<double> p_gv2;
+        /**
+         * [p.u. power] Nonlinear gain point 3
+         */
+        std::optional<double> p_gv3;
+        /**
+         * [p.u. power] Nonlinear gain point 4
+         */
+        std::optional<double> p_gv4;
+        /**
+         * [p.u. power] Nonlinear gain point 5
+         */
+        std::optional<double> p_gv5;
+        /**
+         * [p.u. power] Nonlinear gain point 6
+         */
+        std::optional<double> p_gv6;
+        /**
+         * [p.u.] Permanent droop
+         */
+        std::optional<double> r;
+        /**
+         * [p.u./second] Maximum fuel valve opening rate
+         */
+        std::optional<double> r_max;
+        /**
+         * [second] Governor mechanism time constant
+         *
+         * [second] Governor lag time constant
+         *
+         * [second] Steam bowl time constant
+         *
+         * [second] Lead/lag time constant
+         */
+        std::optional<double> t_1;
+        /**
+         * [second] Turbine power time constant
+         *
+         * [second] Governor lead time constant
+         *
+         * [second] Numerator time constant of T2, T3 block
+         *
+         * [second] Lead/lag time constant
+         */
+        std::optional<double> t_2;
+        /**
+         * [second] Turbine exhaust temperature time constant
+         *
+         * [second] Valve positioner time constant
+         *
+         * [second] Reheater time constant
+         *
+         * [second] Lead/lag time constant
+         */
+        std::optional<double> t_3;
+        /**
+         * [second] Governor lead time constant
+         *
+         * [second] Inlet piping/steam bowl time constant
+         *
+         * [second] Lead/lag time constant
+         */
+        std::optional<double> t_4;
+        /**
+         * [second] Governor lag time constant
+         *
+         * [second] Time constant of second boiler pass
+         *
+         * [second] Washout numerator time constant
+         */
+        std::optional<double> t_5;
+        /**
+         * [second] Valve position averaging time constant
+         */
+        std::optional<double> t_ltr;
+        /**
+         * [p.u. of mw_cap] Maximum turbine power
+         *
+         * [none] Maximum valve position limit
+         *
+         * [p.u. of mwcap] Maximum valve position
+         *
+         * [p.u.] Voltage control maximum limit
+         */
+        std::optional<double> v_max;
+        /**
+         * [p.u. of mw_cap] Minimum turbine power
+         *
+         * [none] Minimum valve position limit
+         *
+         * [p.u. of mwcap] Minimum valve position
+         *
+         * [p.u.] Voltage control minimum limit
+         */
+        std::optional<double> v_min;
+        /**
+         * [p.u./second] Acceleration limiter setpoint
+         */
+        std::optional<double> aset;
+        /**
+         * [p.u.] Speed sensitivity coefficient
+         */
+        std::optional<double> d_m;
+        /**
+         * [none] Speed governor dead band
+         */
+        std::optional<double> db;
+        /**
+         * [none] Switch for fuel source characteristic. Values: =0 for fuel flow independent of
+         * speed; =1 fuel flow proportional to speed.
+         */
+        std::optional<int64_t> f_lag;
+        /**
+         * [none] Governor derivative gain
+         */
+        std::optional<double> k_dgov;
+        /**
+         * [none] Governor integral gain
+         */
+        std::optional<double> k_igov;
+        /**
+         * [none] Load limiter integral gain for PI controller
+         */
+        std::optional<double> k_iload;
+        /**
+         * [none] Power controller (reset) gain
+         */
+        std::optional<double> k_imw;
+        /**
+         * [none] Governor proportional gain
+         */
+        std::optional<double> k_pgov;
+        /**
+         * [none] Load limiter proportional gain for PI controller
+         */
+        std::optional<double> k_pload;
+        /**
+         * [none] Turbine gain (> 0.)
+         */
+        std::optional<double> k_trub;
+        /**
+         * [p.u.] Load limiter reference value
+         */
+        std::optional<double> l_dref;
+        /**
+         * [none] Maximum value for speed error signal
+         */
+        std::optional<double> max_err;
+        /**
+         * [none] Minimum value for speed error signal
+         */
+        std::optional<double> min_err;
+        /**
+         * [MW] Power controller setpoint
+         */
+        std::optional<double> p_mwset;
+        /**
+         * [p.u.] Permanent droop
+         */
+        std::optional<double> dynamic_and_control_r;
+        /**
+         * [p.u./second] Minimum valve opening rate
+         */
+        std::optional<double> r_close;
+        /**
+         * [none] Maximum rate of load limit decrease
+         */
+        std::optional<double> r_down;
+        /**
+         * [p.u./second] Maximum valve opening rate
+         */
+        std::optional<double> r_open;
+        /**
+         * [none] Feedback signal for droop. Values: =1 selected electrical power;  =0 none
+         * (isochronous governor); =-1 fuel valve stroke (true stroke); =-2 governor output (
+         * requested stroke)
+         */
+        std::optional<int64_t> r_select;
+        /**
+         * [none] Maximum rate of load limit increase
+         */
+        std::optional<double> r_up;
+        /**
+         * [second] Actuator time constant
+         */
+        std::optional<double> t_act;
+        /**
+         * [second] Governor derivative controller time constant
+         */
+        std::optional<double> t_dgov;
+        /**
+         * [second] Transport lag time constant for diesel engine
+         */
+        std::optional<double> t_eng;
+        /**
+         * [second] Load Limiter time constant (> 0.)
+         */
+        std::optional<double> t_fload;
+        /**
+         * [second] Electrical power transducer time constant (> 0.)
+         */
+        std::optional<double> t_pelec;
+        /**
+         * [second] Temperature detection lead time constant
+         */
+        std::optional<double> t_sa;
+        /**
+         * [second] Temperature detection lag time constant
+         */
+        std::optional<double> t_sb;
+        /**
+         * [p.u.] No load fuel flow
+         */
+        std::optional<double> wfnl;
+        /**
+         * [p.u.] Turbine gain
+         */
+        std::optional<double> a_t;
+        /**
+         * [p.u.] Kaplan blade servo point 0
+         */
+        std::optional<double> b_gv0;
+        /**
+         * [p.u.] Kaplan blade servo point 1
+         */
+        std::optional<double> b_gv1;
+        /**
+         * [p.u.] Kaplan blade servo point 2
+         */
+        std::optional<double> b_gv2;
+        /**
+         * [p.u.] Kaplan blade servo point 3
+         */
+        std::optional<double> b_gv3;
+        /**
+         * [p.u.] Kaplan blade servo point 4
+         */
+        std::optional<double> b_gv4;
+        /**
+         * [p.u.] Kaplan blade servo point 5
+         */
+        std::optional<double> b_gv5;
+        /**
+         * [none] Maximum blade adjustment factor
+         */
+        std::optional<double> b_max;
+        /**
+         * [p.u. of mwcap] Maximum gate opening
+         */
+        std::optional<double> g_max;
+        /**
+         * [p.u. of mwcap] Minimum gate opening
+         */
+        std::optional<double> g_min;
+        /**
+         * [p.u.] Head available at dam
+         */
+        std::optional<double> hdam;
+        /**
+         * [p.u.] No-load flow at nominal head
+         */
+        std::optional<double> qnl;
+        /**
+         * [p.u.] Permanent droop (R)
+         */
+        std::optional<double> r_perm;
+        /**
+         * [p.u.] Temporary droop (r)
+         */
+        std::optional<double> r_temp;
+        /**
+         * [second] Blade servo time constant
+         */
+        std::optional<double> t_blade;
+        /**
+         * [second] Gate servo time constant
+         */
+        std::optional<double> t_g;
+        /**
+         * [second] Lead time constant
+         */
+        std::optional<double> t_n;
+        /**
+         * [second] Lag time constant
+         */
+        std::optional<double> t_np;
+        /**
+         * [second] Water inertia time constant
+         *
+         * [second] Time delay for each controlled device in gen
+         */
+        std::optional<Bs> t_w;
+        /**
+         * [N/A] NOT USED
+         */
+        std::optional<int64_t> ttrip;
+        /**
+         * [p.u./second] Maximum gate velocity
+         */
+        std::optional<double> v_elm;
+        /**
+         * [none] Fraction of hp shaft power after first boiler pass
+         */
+        std::optional<double> k_1;
+        /**
+         * [none] Fraction of lp shaft power after first boiler pass
+         */
+        std::optional<double> k_2;
+        /**
+         * [none] Fraction of hp shaft power after second boiler pass
+         */
+        std::optional<double> k_3;
+        /**
+         * [none] Fraction of lp shaft power after second boiler pass
+         */
+        std::optional<double> k_4;
+        /**
+         * [none] Fraction of hp shaft power after third boiler pass
+         */
+        std::optional<double> k_5;
+        /**
+         * [none] Fraction of lp shaft power after third boiler pass
+         */
+        std::optional<double> k_6;
+        /**
+         * [none] Fraction of hp shaft power after fourth boiler pass
+         */
+        std::optional<double> k_7;
+        /**
+         * [none] Fraction of lp shaft power after fourth boiler pass
+         */
+        std::optional<double> k_8;
+        /**
+         * [p.u. of mwcap] Maximum valve opening
+         *
+         * [p.u.] Maximum power reference
+         *
+         * [p.u.] Maximum power
+         */
+        std::optional<double> p_max;
+        /**
+         * [p.u. of mwcap] Minimum valve opening
+         *
+         * [p.u.] Minimum power reference
+         *
+         * [p.u.] Minimum power
+         */
+        std::optional<double> p_min;
+        /**
+         * [second] Time constant of third boiler pass
+         *
+         * [second] Washout denominator time constant
+         */
+        std::optional<double> t_6;
+        /**
+         * [second] Time constant of fourth boiler pass
+         */
+        std::optional<double> t_7;
+        /**
+         * [p.u./second] Maximum valve closing velocity (< 0.)
+         */
+        std::optional<double> u_c;
+        /**
+         * [p.u./second] Maximum valve opening velocity
+         */
+        std::optional<double> u_o;
+        /**
+         * [p.u.] Turbine damping coefficient
+         */
+        std::optional<double> d_t;
+        /**
+         * [none] Notch filter parameters
+         */
+        std::optional<double> a_1;
+        /**
+         * [none] Notch filter parameters
+         */
+        std::optional<double> a_2;
+        /**
+         * [none] Notch filter parameters
+         */
+        std::optional<double> a_3;
+        /**
+         * [none] Notch filter parameters
+         */
+        std::optional<double> a_4;
+        /**
+         * [none] Notch filter parameters
+         */
+        std::optional<double> a_5;
+        /**
+         * [none] Notch filter parameters
+         */
+        std::optional<double> a_6;
+        /**
+         * [none] Input signal code
+         */
+        std::optional<double> j;
+        /**
+         * [none] Remote signal bus number
+         */
+        std::optional<int64_t> dynamic_and_control_k;
+        /**
+         * [none] Stabilizer gain
+         */
+        std::optional<double> k_s;
+        /**
+         * [p.u.] Maximum stabilizer output
+         */
+        std::optional<double> ls_max;
+        /**
+         * [p.u.] Minimum stabilizer output
+         */
+        std::optional<double> ls_min;
+        /**
+         * [second] Time delay
+         */
+        std::optional<double> t_delay;
+        /**
+         * [p.u.] Stabilizer input cutoff threshold
+         */
+        std::optional<double> v_cl;
+        /**
+         * [p.u.] Stabilizer input cutoff threshold
+         */
+        std::optional<double> v_cu;
+        /**
+         * [MVA] MVA base
+         */
+        std::optional<double> mvab;
+        /**
+         * [degree] Initial blade pitch angle
+         */
+        std::optional<double> theta_0;
+        /**
+         * [p.u./p.u.] Proportional gain
+         */
+        std::optional<double> k_cc;
+        /**
+         * [p.u./p.u./second] Pitch compensation integral gain
+         */
+        std::optional<double> k_ic;
+        /**
+         * [p.u./p.u./second] Pitch controller integral gain
+         */
+        std::optional<double> k_iw;
+        /**
+         * [p.u./p.u.] Pitch compensation proportional gain
+         */
+        std::optional<double> k_pc;
+        /**
+         * [p.u./p.u.] Pitch controller proportional gain
+         */
+        std::optional<double> k_pw;
+        /**
+         * [degree] Maximum pitch angle limit
+         */
+        std::optional<double> pi_max;
+        /**
+         * [degree] Minimum pitch angle limit
+         */
+        std::optional<double> pi_min;
+        /**
+         * [degree/second] Minimum pitch angle rate
+         */
+        std::optional<double> pi_ratmn;
+        /**
+         * [degree/second] Maximum pitch angle rate
+         */
+        std::optional<double> pi_ratmx;
+        /**
+         * [second] Pitch time
+         */
+        std::optional<double> t_pi;
+        /**
+         * [p.u./p.u./second] Integral gain
+         */
+        std::optional<double> k_ip;
+        /**
+         * [p.u./p.u.] Proportional gain
+         */
+        std::optional<double> k_pp;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> p1;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> p2;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> p3;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> p4;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> spd1;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> spd2;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> spd3;
+        /**
+         * [p.u.] User defined point
+         */
+        std::optional<double> spd4;
+        /**
+         * [none] Flag to specify PI controller input
+         */
+        std::optional<int64_t> t_flag;
+        /**
+         * [second] Power measurement lag time constant
+         */
+        std::optional<double> t_p;
+        /**
+         * [p.u.] Maximum torque
+         */
+        std::optional<double> te_max;
+        /**
+         * [p.u.] Minimum torque
+         */
+        std::optional<double> te_min;
+        /**
+         * [p.u.] Maximum torque
+         */
+        std::optional<double> tw_ref;
+        /**
+         * [p.u.] Damping coefficient
+         */
+        std::optional<double> d_shaft;
+        /**
+         * [MW-sec/MVA] Generator inertia
+         */
+        std::optional<double> h_g;
+        /**
+         * [MW-sec/MVA] Turbine inertia
+         */
+        std::optional<double> h_t;
+        /**
+         * [p.u.] Stiffness constant
+         */
+        std::optional<double> k_shaft;
+        /**
+         * [p.u.] Initial speed
+         */
+        std::optional<double> w_o;
+        /**
+         * [p.u.] Acceleration factor used in the high voltage reactive power logic
+         */
+        std::optional<double> accel;
+        /**
+         * [p.u.] LVPL characteristic breakpoint
+         */
+        std::optional<double> brkpt;
+        /**
+         * [p.u./second] Upward rate limit on reactive current command
+         */
+        std::optional<double> iqr_max;
+        /**
+         * [p.u./second] Downward rate limit on reactive current command
+         */
+        std::optional<double> iqr_min;
+        /**
+         * [p.u.] LVPL breakpoint
+         */
+        std::optional<double> lvpl1;
+        /**
+         * [none] Connect (1) / disconnect (0) Low Volt. Power Logic switch
+         */
+        std::optional<int64_t> lvpl_sw;
+        /**
+         * [p.u.] Low voltage point for low voltage active power logic
+         */
+        std::optional<double> lvpnt0;
+        /**
+         * [p.u.] High voltage point for low voltage active power logic
+         */
+        std::optional<double> lvpnt1;
+        /**
+         * [p.u.] Limit in the high voltage reactive power logic
+         *
+         * [p.u.] Reactive power minimum limit
+         *
+         * [p.u.] Minimum Q control output
+         *
+         * [p.u.] Minimum Q PI control (<0) output
+         */
+        std::optional<double> q_min;
+        /**
+         * [p.u.] LVPL ramp rate of recovery limit
+         */
+        std::optional<double> rrpwr;
+        /**
+         * [second] Voltage measurement time constant
+         *
+         * [second] Voltage or reactive power transducer time constant
+         */
+        std::optional<double> tfltr;
+        /**
+         * [second] Time constant
+         */
+        std::optional<double> tg;
+        /**
+         * [p.u.] Generator effective reactance
+         */
+        std::optional<double> xe;
+        /**
+         * [p.u.] LVPL characteristic zero crossing
+         */
+        std::optional<double> zerox;
+        /**
+         * [p.u./second] Up ramp rate on power reference
+         */
+        std::optional<double> dp_max;
+        /**
+         * [p.u./second] Down ramp rate on power reference
+         */
+        std::optional<double> dp_min;
+        /**
+         * [p.u.] Maximum allowable total current limit
+         */
+        std::optional<double> i_max;
+        /**
+         * [p.u.] User defined current used to define VDL2 function
+         */
+        std::optional<double> ip1;
+        /**
+         * [p.u.] User defined current used to define VDL2 function
+         */
+        std::optional<double> ip2;
+        /**
+         * [p.u.] User defined current used to define VDL2 function
+         */
+        std::optional<double> ip3;
+        /**
+         * [p.u.] User defined current used to define VDL2 function
+         */
+        std::optional<double> ip4;
+        /**
+         * [p.u.] User defined current used to define VDL1 function
+         */
+        std::optional<double> iq1;
+        /**
+         * [p.u.] User defined current used to define VDL1 function
+         */
+        std::optional<double> iq2;
+        /**
+         * [p.u.] User defined current used to define VDL1 function
+         */
+        std::optional<double> iq3;
+        /**
+         * [p.u.] User defined current used to define VDL1 function
+         */
+        std::optional<double> iq4;
+        /**
+         * [p.u.] Value at which Iqinj is held for textbf{thld} seconds following a voltage dip if
+         * thld > 0
+         */
+        std::optional<double> iqfrz;
+        /**
+         * [p.u.] Maximum limit of reactive current injection (textbf{iqinj})
+         */
+        std::optional<double> iqh1;
+        /**
+         * [p.u.] Maximum limit of reactive current injection (textbf{iqinj})
+         */
+        std::optional<double> iql1;
+        /**
+         * [p.u.] Integral gain
+         */
+        std::optional<double> kqi;
+        /**
+         * [p.u.] Proportional gain
+         */
+        std::optional<double> kqp;
+        /**
+         * [p.u./p.u.] Reactive current injection gain during voltage dip (and overvoltage)
+         * conditions
+         */
+        std::optional<double> kqv;
+        /**
+         * [p.u.] Integral gain
+         */
+        std::optional<double> kvi;
+        /**
+         * [p.u.] Proportional gain
+         */
+        std::optional<double> kvp;
+        /**
+         * [none] Power reference flag: = 1 : reference is Pref*speed (Do not use with Type 3 WTG);
+         * = 0 : reference is Pref
+         */
+        std::optional<int64_t> p_flag;
+        /**
+         * [none] Power factor flag: = 1 : Power factor control; = 0 : Q control
+         */
+        std::optional<int64_t> pf_flag;
+        /**
+         * [none] Flag for P or Q priority selection on current limit: = 1 : P priority ; = 0 : Q
+         * priority
+         */
+        std::optional<int64_t> pq_flag;
+        /**
+         * [none] Reactive power control flag: = 1 : Voltage/Q control; = 0 : Constant power factor
+         * or Q Control
+         */
+        std::optional<int64_t> q_flag;
+        /**
+         * [p.u.] Reactive power maximum limit
+         *
+         * [p.u.] Maximum Q control output
+         *
+         * [p.u.] Maximum Q PI control (>0) output
+         */
+        std::optional<double> q_max;
+        /**
+         * [second] Time constant
+         */
+        std::optional<double> t_pord;
+        /**
+         * [second] Time delay associated with the computation of iqinj and with the operation of
+         * switch SW
+         */
+        std::optional<double> thld;
+        /**
+         * [none] The active current command (Ipcmd) is held for thld2 seconds after voltage_dip
+         * returns to zero
+         */
+        std::optional<double> thld2;
+        /**
+         * [second] Time constant
+         */
+        std::optional<double> tiq;
+        /**
+         * [second] Electrical power transducer time constant
+         *
+         * [second] Lag time constant on Pgen measurement
+         */
+        std::optional<double> tp;
+        /**
+         * [second] Transducer time constant
+         */
+        std::optional<double> trv;
+        /**
+         * [p.u.] V_term < v_dip activates the current injection logic
+         */
+        std::optional<double> v_dip;
+        /**
+         * [none] Voltage control flag: = 1 : Q Control; = 0 : Voltage control
+         */
+        std::optional<int64_t> v_flag;
+        /**
+         * [p.u.] Reference voltage
+         */
+        std::optional<double> v_ref0;
+        /**
+         * [p.u.] User-defined reference on the inner-loop voltage control (default value is zero)
+         */
+        std::optional<double> v_ref1;
+        /**
+         * [p.u.] V_term < v_up activates the current injection logic
+         */
+        std::optional<double> v_up;
+        /**
+         * [p.u.] User defined voltage used to define VDL2 function
+         */
+        std::optional<double> vp1;
+        /**
+         * [p.u.] User defined voltage used to define VDL2 function
+         */
+        std::optional<double> vp2;
+        /**
+         * [p.u.] User defined voltage used to define VDL2 function
+         */
+        std::optional<double> vp3;
+        /**
+         * [p.u.] User defined voltage used to define VDL2 function
+         */
+        std::optional<double> vp4;
+        /**
+         * [p.u.] User defined voltage used to define VDL1 function
+         */
+        std::optional<double> vq1;
+        /**
+         * [p.u.] User defined voltage used to define VDL1 function
+         */
+        std::optional<double> vq2;
+        /**
+         * [p.u.] User defined voltage used to define VDL1 function
+         */
+        std::optional<double> vq3;
+        /**
+         * [p.u.] User defined voltage used to define VDL1 function
+         */
+        std::optional<double> vq4;
+        /**
+         * [p.u.] Deadband
+         */
+        std::optional<double> dbd;
+        /**
+         * [p.u.] Downside droop
+         */
+        std::optional<double> ddn;
+        /**
+         * [p.u.] Upside droop
+         */
+        std::optional<double> dup;
+        /**
+         * [p.u.] Deadband downside
+         */
+        std::optional<double> fdbd1;
+        /**
+         * [p.u.] Deadband upside
+         */
+        std::optional<double> fdbd2;
+        /**
+         * [p.u.] Maximum error limit
+         */
+        std::optional<double> fe_max;
+        /**
+         * [p.u.] Minimum error limit
+         */
+        std::optional<double> fe_min;
+        /**
+         * [none] Pref output flag
+         */
+        std::optional<int64_t> frqflg;
+        /**
+         * [p.u.] Integral gain for power control
+         */
+        std::optional<double> kig;
+        /**
+         * [p.u.] Proportional gain for power control
+         */
+        std::optional<double> kpg;
+        std::optional<BusRefElement> monitored_branch;
+        /**
+         * type of monitored branch
+         */
+        std::optional<MonitoredBranchType> monitored_branch_type;
+        std::optional<BusRefElement> monitored_bus;
+        /**
+         * [none] TS
+         */
+        std::optional<int64_t> outflag;
+        /**
+         * [none] Per unit flag. If puflag = 0 then Pbranch and Qbranch are in p.u. system base;
+         * else Pbranch and Qbranch are in p.u. on model base (mvab)
+         */
+        std::optional<int64_t> puflag;
+        /**
+         * [p.u.] Line drop compensation resistance
+         */
+        std::optional<double> r_c;
+        /**
+         * [none] = 1 : Voltage control; = 0: Reactive control
+         */
+        std::optional<int64_t> refflg;
+        /**
+         * [second] Lag time constant on Pref feedback
+         */
+        std::optional<double> t_lag;
+        /**
+         * [second] Lead time constant
+         */
+        std::optional<double> tft;
+        /**
+         * [second] Lag time constant
+         */
+        std::optional<double> tfv;
+        /**
+         * [none] Flag for selection of droop (=0), or line drop compensation (=1)
+         */
+        std::optional<int64_t> vcmpflg;
+        /**
+         * [p.u.] If Vreg < vfrz, then state s2 is frozen
+         */
+        std::optional<double> vfrz;
+        /**
+         * [p.u.] Line drop compensation reactance
+         */
+        std::optional<double> x_c;
+        /**
+         * [none] Reactive path gain for each controlled device in gen
+         */
+        std::optional<std::vector<double>> k_w;
+        /**
+         * [none] Real path gain for each controlled device in gen
+         */
+        std::optional<std::vector<double>> k_z;
     };
 
     /**
@@ -298,7 +1840,7 @@ namespace ctm_schemas {
         /**
          * uid of time series (in time_series_data) this reference points to
          */
-        std::optional<BusFr> uid;
+        std::optional<BusRefElement> uid;
     };
 
     using CostPgParameters = std::variant<std::vector<double>, CostPgParametersClass>;
@@ -323,7 +1865,7 @@ namespace ctm_schemas {
         /**
          * uid of bus to which generator is connected to
          */
-        BusFr bus;
+        BusRefElement bus;
         /**
          * type of generation cost model (i.e., function translating power/energy to money);
          * POLYNOMIAL => cost_pg_parameters is an array with n+1 coefficients <a_i> for f(x) = a_0 +
@@ -446,7 +1988,7 @@ namespace ctm_schemas {
          */
         std::optional<double> startup_time_warm;
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [kV or pu] target voltage magnitude of the bus that this generator connects to
          */
@@ -469,7 +2011,7 @@ namespace ctm_schemas {
         /**
          * UID of reference bus of the electrical network
          */
-        std::optional<BusFr> bus_ref;
+        std::optional<BusRefElement> bus_ref;
         /**
          * units used for physical network parameters
          */
@@ -492,11 +2034,11 @@ namespace ctm_schemas {
         /**
          * uid of bus at the from terminal of hvdc line
          */
-        BusFr bus_fr;
+        BusRefElement bus_fr;
         /**
          * uid of bus at the to terminal of hvdc line
          */
-        BusFr bus_to;
+        BusRefElement bus_to;
         /**
          * [kA or pu] ac persistent current rating, from terminal (if in pu, use from bus base_kv)
          */
@@ -603,7 +2145,7 @@ namespace ctm_schemas {
          * reconnectors or other)
          */
         std::optional<double> transient_outage_rate;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [kV or pu] minimum voltage at the dc side
          */
@@ -621,7 +2163,7 @@ namespace ctm_schemas {
         /**
          * uid of bus to which load is connected to
          */
-        BusFr bus;
+        BusRefElement bus;
         /**
          * additional bus parameters currently not supported by CTM
          */
@@ -659,18 +2201,18 @@ namespace ctm_schemas {
          */
         std::optional<VmLb> qd_y;
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     struct NetworkSwitch {
         /**
          * uid of bus at the from terminal of switch
          */
-        BusFr bus_fr;
+        BusRefElement bus_fr;
         /**
          * uid of bus at the to terminal of switch
          */
-        BusFr bus_to;
+        BusRefElement bus_to;
         /**
          * [kA or pu] current limit
          */
@@ -692,7 +2234,7 @@ namespace ctm_schemas {
          */
         std::optional<double> sm_ub;
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     enum class ReserveType : int { PRIMARY, SECONDARY, TERTIARY };
@@ -712,7 +2254,7 @@ namespace ctm_schemas {
         /**
          * uid of generators contributing to this reserve
          */
-        std::optional<std::vector<BusFr>> participants;
+        std::optional<std::vector<BusRefElement>> participants;
         /**
          * [MW or pu] downward active power required by this reserve
          */
@@ -723,10 +2265,8 @@ namespace ctm_schemas {
         std::optional<CmUbA> pg_up;
         ReserveType reserve_type;
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
-
-    using Bs = std::variant<std::vector<double>, double>;
 
     using Gs = std::variant<std::vector<double>, double>;
 
@@ -743,7 +2283,7 @@ namespace ctm_schemas {
         /**
          * uid of bus to which shunt is connected to
          */
-        BusFr bus;
+        BusRefElement bus;
         /**
          * additional shunt parameters currently not supported by CTM
          */
@@ -765,7 +2305,7 @@ namespace ctm_schemas {
          */
         NumStepsUbUnion num_steps_ub;
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     using ChargeEfficiency = std::variant<CmUbAClass, double>;
@@ -777,7 +2317,7 @@ namespace ctm_schemas {
         /**
          * uid of bus to which generator is connected to
          */
-        BusFr bus;
+        BusRefElement bus;
         /**
          * [-] charge efficiency, in (0, 1]
          */
@@ -843,7 +2383,7 @@ namespace ctm_schemas {
          */
         std::optional<double> sm_ub;
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -858,11 +2398,11 @@ namespace ctm_schemas {
         /**
          * uid of bus at the from terminal of transformer
          */
-        BusFr bus_fr;
+        BusRefElement bus_fr;
         /**
          * uid of bus at the to terminal of transformer
          */
-        BusFr bus_to;
+        BusRefElement bus_to;
         /**
          * [kA or pu] persistent current rating, referred to from side
          */
@@ -944,7 +2484,7 @@ namespace ctm_schemas {
          * tap_value)
          */
         std::optional<double> tm_ub;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [Ohm or pu] series impedance of line
          */
@@ -970,7 +2510,7 @@ namespace ctm_schemas {
          * within zone should be omitted); 1=>included, 0=>omitted
          */
         int64_t status;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -980,6 +2520,7 @@ namespace ctm_schemas {
         std::optional<std::vector<NetworkAcLine>> ac_line;
         std::vector<Area> area;
         std::vector<NetworkBus> bus;
+        std::optional<std::vector<DynamicAndControl>> dynamic_and_control;
         std::vector<NetworkGen> gen;
         /**
          * structure to hold global settings for parameters in the network
@@ -1006,7 +2547,7 @@ namespace ctm_schemas {
         /**
          * uid of bus this record refers to
          */
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [deg] initial voltage angle
          */
@@ -1044,7 +2585,7 @@ namespace ctm_schemas {
         /**
          * uid of generator this record refers to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1085,7 +2626,7 @@ namespace ctm_schemas {
         /**
          * uid of hvdc point-to-point this record refers to
          */
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [kV or pu] initial dc side voltage at from converter
          */
@@ -1111,7 +2652,7 @@ namespace ctm_schemas {
         /**
          * uid of shunt this record refers to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1137,7 +2678,7 @@ namespace ctm_schemas {
         /**
          * uid of storage this record refers to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1155,7 +2696,7 @@ namespace ctm_schemas {
         /**
          * uid of switch this record refers to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1174,7 +2715,7 @@ namespace ctm_schemas {
          * [-] initial tap ratio
          */
         double tm;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1226,7 +2767,7 @@ namespace ctm_schemas {
         /**
          * array of uids of time series
          */
-        std::vector<BusFr> uid;
+        std::vector<BusRefElement> uid;
         /**
          * array of time series values
          */
@@ -1234,7 +2775,7 @@ namespace ctm_schemas {
     };
 
     /**
-     * Common Transmission Model (CTM) Data Schema v0.1
+     * Common Transmission Model (CTM) Data Schema v0.2
      */
     struct CtmData {
         /**
@@ -1271,7 +2812,7 @@ namespace ctm_schemas {
         /**
          * uid of time series (in time_series_data) this reference points to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     using PlFr = std::variant<CtmSolutionSchema, double>;
@@ -1300,7 +2841,7 @@ namespace ctm_schemas {
          * [MVAr or pu] reactive power entering the ac line at its to terminal
          */
         std::optional<PlFr> ql_to;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1327,7 +2868,7 @@ namespace ctm_schemas {
          * [$/MVAr or $/pu] dual of reactive power balance constraints
          */
         std::optional<PlFr> q_lambda;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [deg] voltage magnitude
          */
@@ -1353,7 +2894,7 @@ namespace ctm_schemas {
         /**
          * uid of reserve product rg contributes to
          */
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1377,7 +2918,7 @@ namespace ctm_schemas {
          */
         std::optional<PlFr> qg;
         std::optional<std::vector<ReserveProvision>> reserve_provision;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1418,7 +2959,7 @@ namespace ctm_schemas {
          * [MVAr or pu] reactive power entering the hvdc line at its to terminal
          */
         std::optional<PlFr> qdc_to;
-        BusFr uid;
+        BusRefElement uid;
         /**
          * [kV or pu] voltage at the dc side
          */
@@ -1437,7 +2978,7 @@ namespace ctm_schemas {
          * [MW or pu] shortfall on reserve product
          */
         PlFr shortfall;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     using PurpleNumSteps = std::variant<std::vector<int64_t>, CtmSolutionSchema, int64_t>;
@@ -1454,7 +2995,7 @@ namespace ctm_schemas {
          * number of energized steps of shunt section (lower bound is always 0)
          */
         PurpleNumSteps num_steps;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1477,7 +3018,7 @@ namespace ctm_schemas {
          * binary indicator of switch state; 0=>open, 1=>closed
          */
         InService state;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1508,7 +3049,7 @@ namespace ctm_schemas {
          * [MW or pu] reactive power injection
          */
         std::optional<PlFr> qs;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1543,7 +3084,7 @@ namespace ctm_schemas {
          * [-] tap ratio
          */
         std::optional<PlFr> tm;
-        BusFr uid;
+        BusRefElement uid;
     };
 
     /**
@@ -1594,7 +3135,7 @@ namespace ctm_schemas {
         /**
          * array of uids of time series
          */
-        std::vector<BusFr> uid;
+        std::vector<BusRefElement> uid;
         /**
          * array of time series values
          */
@@ -1652,7 +3193,7 @@ namespace ctm_schemas {
         /**
          * array of uids of time series
          */
-        std::vector<BusFr> uid;
+        std::vector<BusRefElement> uid;
         /**
          * array of time series values
          */
@@ -1690,6 +3231,9 @@ void to_json(json & j, const Area & x);
 
 void from_json(const json & j, NetworkBus & x);
 void to_json(json & j, const NetworkBus & x);
+
+void from_json(const json & j, DynamicAndControl & x);
+void to_json(json & j, const DynamicAndControl & x);
 
 void from_json(const json & j, CostPgParametersClass & x);
 void to_json(json & j, const CostPgParametersClass & x);
@@ -1814,6 +3358,15 @@ void to_json(json & j, const CtmTimeSeriesData & x);
 void from_json(const json & j, TypeEnum & x);
 void to_json(json & j, const TypeEnum & x);
 
+void from_json(const json & j, Category & x);
+void to_json(json & j, const Category & x);
+
+void from_json(const json & j, Model & x);
+void to_json(json & j, const Model & x);
+
+void from_json(const json & j, MonitoredBranchType & x);
+void to_json(json & j, const MonitoredBranchType & x);
+
 void from_json(const json & j, CostPgModel & x);
 void to_json(json & j, const CostPgModel & x);
 
@@ -1852,6 +3405,24 @@ struct adl_serializer<std::variant<ctm_schemas::CmUbAClass, ctm_schemas::TypeEnu
 };
 
 template <>
+struct adl_serializer<std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string>> {
+    static void from_json(const json & j, std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string> & x);
+    static void to_json(json & j, const std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string> & x);
+};
+
+template <>
+struct adl_serializer<std::variant<double, int64_t>> {
+    static void from_json(const json & j, std::variant<double, int64_t> & x);
+    static void to_json(json & j, const std::variant<double, int64_t> & x);
+};
+
+template <>
+struct adl_serializer<std::variant<std::vector<double>, double>> {
+    static void from_json(const json & j, std::variant<std::vector<double>, double> & x);
+    static void to_json(json & j, const std::variant<std::vector<double>, double> & x);
+};
+
+template <>
 struct adl_serializer<std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass>> {
     static void from_json(const json & j, std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x);
     static void to_json(json & j, const std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x);
@@ -1861,12 +3432,6 @@ template <>
 struct adl_serializer<std::variant<ctm_schemas::CmUbAClass, int64_t>> {
     static void from_json(const json & j, std::variant<ctm_schemas::CmUbAClass, int64_t> & x);
     static void to_json(json & j, const std::variant<ctm_schemas::CmUbAClass, int64_t> & x);
-};
-
-template <>
-struct adl_serializer<std::variant<std::vector<double>, double>> {
-    static void from_json(const json & j, std::variant<std::vector<double>, double> & x);
-    static void to_json(json & j, const std::variant<std::vector<double>, double> & x);
 };
 
 template <>
@@ -1902,7 +3467,7 @@ struct adl_serializer<std::variant<std::vector<int64_t>, ctm_schemas::CtmSolutio
 namespace ctm_schemas {
     inline void from_json(const json & j, CmUbAClass& x) {
         x.scale_factor = j.at("scale_factor").get<double>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const CmUbAClass & x) {
@@ -1914,8 +3479,8 @@ namespace ctm_schemas {
     inline void from_json(const json & j, NetworkAcLine& x) {
         x.b_fr = get_stack_optional<double>(j, "b_fr");
         x.b_to = get_stack_optional<double>(j, "b_to");
-        x.bus_fr = j.at("bus_fr").get<BusFr>();
-        x.bus_to = j.at("bus_to").get<BusFr>();
+        x.bus_fr = j.at("bus_fr").get<BusRefElement>();
+        x.bus_to = j.at("bus_to").get<BusRefElement>();
         x.cm_ub_a = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_a");
         x.cm_ub_b = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_b");
         x.cm_ub_c = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_c");
@@ -1932,7 +3497,7 @@ namespace ctm_schemas {
         x.sm_ub_c = get_stack_optional<std::variant<CmUbAClass, double>>(j, "sm_ub_c");
         x.status = j.at("status").get<int64_t>();
         x.transient_outage_rate = get_stack_optional<double>(j, "transient_outage_rate");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.vad_lb = get_stack_optional<double>(j, "vad_lb");
         x.vad_ub = get_stack_optional<double>(j, "vad_ub");
         x.x = j.at("x").get<double>();
@@ -1970,7 +3535,7 @@ namespace ctm_schemas {
         x.ext = get_untyped(j, "ext");
         x.name = get_stack_optional<std::string>(j, "name");
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const Area & x) {
@@ -1988,7 +3553,7 @@ namespace ctm_schemas {
         x.name = get_stack_optional<std::string>(j, "name");
         x.status = j.at("status").get<int64_t>();
         x.type = get_stack_optional<std::variant<CmUbAClass, TypeEnum>>(j, "type");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.vm_lb = get_stack_optional<std::variant<CmUbAClass, double>>(j, "vm_lb");
         x.vm_ub = get_stack_optional<std::variant<CmUbAClass, double>>(j, "vm_ub");
         x.zone = get_stack_optional<std::variant<int64_t, std::string>>(j, "zone");
@@ -2008,6 +3573,631 @@ namespace ctm_schemas {
         j["zone"] = x.zone;
     }
 
+    inline void from_json(const json & j, DynamicAndControl& x) {
+        x.category = j.at("category").get<Category>();
+        x.d = get_stack_optional<double>(j, "D");
+        x.gen = get_stack_optional<std::variant<std::vector<BusRefElement>, int64_t, std::string>>(j, "gen");
+        x.h = get_stack_optional<double>(j, "H");
+        x.l_1 = get_stack_optional<double>(j, "l_1");
+        x.l_d = get_stack_optional<double>(j, "l_d");
+        x.l_pd = get_stack_optional<double>(j, "l_pd");
+        x.l_ppd = get_stack_optional<double>(j, "l_ppd");
+        x.l_pq = get_stack_optional<double>(j, "l_pq");
+        x.l_q = get_stack_optional<double>(j, "l_q");
+        x.model = j.at("model").get<Model>();
+        x.r_a = get_stack_optional<double>(j, "r_a");
+        x.r_comp = get_stack_optional<double>(j, "r_comp");
+        x.s_1 = get_stack_optional<double>(j, "s_1");
+        x.s_12 = get_stack_optional<double>(j, "s_12");
+        x.t_pdo = get_stack_optional<double>(j, "t_pdo");
+        x.t_ppdo = get_stack_optional<double>(j, "t_ppdo");
+        x.t_ppqo = get_stack_optional<double>(j, "t_ppqo");
+        x.t_pqo = get_stack_optional<double>(j, "t_pqo");
+        x.uid = j.at("uid").get<BusRefElement>();
+        x.x_comp = get_stack_optional<double>(j, "x_comp");
+        x.e_1 = get_stack_optional<double>(j, "e_1");
+        x.e_2 = get_stack_optional<double>(j, "e_2");
+        x.k_a = get_stack_optional<std::variant<double, int64_t>>(j, "k_a");
+        x.k_c = get_stack_optional<double>(j, "k_c");
+        x.k_d = get_stack_optional<double>(j, "k_d");
+        x.k_e = get_stack_optional<double>(j, "k_e");
+        x.k_f = get_stack_optional<double>(j, "k_f");
+        x.s_e1 = get_stack_optional<double>(j, "s_e1");
+        x.s_e2 = get_stack_optional<double>(j, "s_e2");
+        x.spdmlt = get_stack_optional<double>(j, "spdmlt");
+        x.t_a = get_stack_optional<double>(j, "t_a");
+        x.t_b = get_stack_optional<double>(j, "t_b");
+        x.t_c = get_stack_optional<double>(j, "t_c");
+        x.t_e = get_stack_optional<double>(j, "t_e");
+        x.t_f = get_stack_optional<double>(j, "t_f");
+        x.t_r = get_stack_optional<double>(j, "t_r");
+        x.va_max = get_stack_optional<double>(j, "va_max");
+        x.va_min = get_stack_optional<double>(j, "va_min");
+        x.vr_max = get_stack_optional<double>(j, "vr_max");
+        x.vr_min = get_stack_optional<double>(j, "vr_min");
+        x.k_h = get_stack_optional<double>(j, "k_h");
+        x.t_h = get_stack_optional<double>(j, "t_h");
+        x.t_j = get_stack_optional<double>(j, "t_j");
+        x.t_k = get_stack_optional<double>(j, "t_k");
+        x.vfe_lim = get_stack_optional<double>(j, "vfe_lim");
+        x.vh_max = get_stack_optional<double>(j, "vh_max");
+        x.exclim = get_stack_optional<double>(j, "exclim");
+        x.uelin = get_stack_optional<double>(j, "uelin");
+        x.ang_p = get_stack_optional<double>(j, "ang_p");
+        x.k_g = get_stack_optional<double>(j, "k_g");
+        x.k_i = get_stack_optional<double>(j, "k_i");
+        x.k_im = get_stack_optional<double>(j, "k_im");
+        x.k_ir = get_stack_optional<double>(j, "k_ir");
+        x.k_p = get_stack_optional<double>(j, "k_p");
+        x.k_pm = get_stack_optional<double>(j, "k_pm");
+        x.k_pr = get_stack_optional<double>(j, "k_pr");
+        x.vb_max = get_stack_optional<double>(j, "vb_max");
+        x.vg_max = get_stack_optional<double>(j, "vg_max");
+        x.vm_max = get_stack_optional<double>(j, "vm_max");
+        x.vm_min = get_stack_optional<double>(j, "vm_min");
+        x.x_l = get_stack_optional<double>(j, "x_l");
+        x.k_b = get_stack_optional<double>(j, "k_b");
+        x.k_l = get_stack_optional<double>(j, "k_l");
+        x.v_lr = get_stack_optional<double>(j, "v_lr");
+        x.efd_max = get_stack_optional<double>(j, "efd_max");
+        x.efd_min = get_stack_optional<double>(j, "efd_min");
+        x.t_a1 = get_stack_optional<double>(j, "t_a1");
+        x.t_a2 = get_stack_optional<double>(j, "t_a2");
+        x.t_a3 = get_stack_optional<double>(j, "t_a3");
+        x.t_a4 = get_stack_optional<double>(j, "t_a4");
+        x.t_f1 = get_stack_optional<double>(j, "t_f1");
+        x.t_f2 = get_stack_optional<double>(j, "t_f2");
+        x.v_r1 = get_stack_optional<double>(j, "v_r1");
+        x.v_r2 = get_stack_optional<double>(j, "v_r2");
+        x.s_pare = get_stack_optional<double>(j, "s_pare");
+        x.c_switch = get_stack_optional<int64_t>(j, "c_switch");
+        x.e_max = get_stack_optional<double>(j, "e_max");
+        x.e_min = get_stack_optional<double>(j, "e_min");
+        x.k = get_stack_optional<double>(j, "K");
+        x.r_crfd = get_stack_optional<double>(j, "r_crfd");
+        x.t_atb = get_stack_optional<double>(j, "t_atb");
+        x.a = get_stack_optional<double>(j, "a");
+        x.b = get_stack_optional<double>(j, "b");
+        x.d_turb = get_stack_optional<double>(j, "d_turb");
+        x.db1 = get_stack_optional<double>(j, "db1");
+        x.db2 = get_stack_optional<double>(j, "db2");
+        x.eps = get_stack_optional<double>(j, "eps");
+        x.f_idle = get_stack_optional<double>(j, "f_idle");
+        x.g_v1 = get_stack_optional<double>(j, "g_v1");
+        x.g_v2 = get_stack_optional<double>(j, "g_v2");
+        x.g_v3 = get_stack_optional<double>(j, "g_v3");
+        x.g_v4 = get_stack_optional<double>(j, "g_v4");
+        x.g_v5 = get_stack_optional<double>(j, "g_v5");
+        x.g_v6 = get_stack_optional<double>(j, "g_v6");
+        x.k_t = get_stack_optional<double>(j, "k_t");
+        x.l_max = get_stack_optional<double>(j, "l_max");
+        x.l_oadinc = get_stack_optional<double>(j, "l_oadinc");
+        x.lt_rate = get_stack_optional<double>(j, "lt_rate");
+        x.mw_cap = get_stack_optional<double>(j, "mw_cap");
+        x.p_gv1 = get_stack_optional<double>(j, "p_gv1");
+        x.p_gv2 = get_stack_optional<double>(j, "p_gv2");
+        x.p_gv3 = get_stack_optional<double>(j, "p_gv3");
+        x.p_gv4 = get_stack_optional<double>(j, "p_gv4");
+        x.p_gv5 = get_stack_optional<double>(j, "p_gv5");
+        x.p_gv6 = get_stack_optional<double>(j, "p_gv6");
+        x.r = get_stack_optional<double>(j, "R");
+        x.r_max = get_stack_optional<double>(j, "r_max");
+        x.t_1 = get_stack_optional<double>(j, "t_1");
+        x.t_2 = get_stack_optional<double>(j, "t_2");
+        x.t_3 = get_stack_optional<double>(j, "t_3");
+        x.t_4 = get_stack_optional<double>(j, "t_4");
+        x.t_5 = get_stack_optional<double>(j, "t_5");
+        x.t_ltr = get_stack_optional<double>(j, "t_ltr");
+        x.v_max = get_stack_optional<double>(j, "v_max");
+        x.v_min = get_stack_optional<double>(j, "v_min");
+        x.aset = get_stack_optional<double>(j, "aset");
+        x.d_m = get_stack_optional<double>(j, "d_m");
+        x.db = get_stack_optional<double>(j, "db");
+        x.f_lag = get_stack_optional<int64_t>(j, "f_lag");
+        x.k_dgov = get_stack_optional<double>(j, "k_dgov");
+        x.k_igov = get_stack_optional<double>(j, "k_igov");
+        x.k_iload = get_stack_optional<double>(j, "k_iload");
+        x.k_imw = get_stack_optional<double>(j, "k_imw");
+        x.k_pgov = get_stack_optional<double>(j, "k_pgov");
+        x.k_pload = get_stack_optional<double>(j, "k_pload");
+        x.k_trub = get_stack_optional<double>(j, "k_trub");
+        x.l_dref = get_stack_optional<double>(j, "l_dref");
+        x.max_err = get_stack_optional<double>(j, "max_err");
+        x.min_err = get_stack_optional<double>(j, "min_err");
+        x.p_mwset = get_stack_optional<double>(j, "p_mwset");
+        x.dynamic_and_control_r = get_stack_optional<double>(j, "r");
+        x.r_close = get_stack_optional<double>(j, "r_close");
+        x.r_down = get_stack_optional<double>(j, "r_down");
+        x.r_open = get_stack_optional<double>(j, "r_open");
+        x.r_select = get_stack_optional<int64_t>(j, "r_select");
+        x.r_up = get_stack_optional<double>(j, "r_up");
+        x.t_act = get_stack_optional<double>(j, "t_act");
+        x.t_dgov = get_stack_optional<double>(j, "t_dgov");
+        x.t_eng = get_stack_optional<double>(j, "t_eng");
+        x.t_fload = get_stack_optional<double>(j, "t_fload");
+        x.t_pelec = get_stack_optional<double>(j, "t_pelec");
+        x.t_sa = get_stack_optional<double>(j, "t_sa");
+        x.t_sb = get_stack_optional<double>(j, "t_sb");
+        x.wfnl = get_stack_optional<double>(j, "wfnl");
+        x.a_t = get_stack_optional<double>(j, "a_t");
+        x.b_gv0 = get_stack_optional<double>(j, "b_gv0");
+        x.b_gv1 = get_stack_optional<double>(j, "b_gv1");
+        x.b_gv2 = get_stack_optional<double>(j, "b_gv2");
+        x.b_gv3 = get_stack_optional<double>(j, "b_gv3");
+        x.b_gv4 = get_stack_optional<double>(j, "b_gv4");
+        x.b_gv5 = get_stack_optional<double>(j, "b_gv5");
+        x.b_max = get_stack_optional<double>(j, "b_max");
+        x.g_max = get_stack_optional<double>(j, "g_max");
+        x.g_min = get_stack_optional<double>(j, "g_min");
+        x.hdam = get_stack_optional<double>(j, "hdam");
+        x.qnl = get_stack_optional<double>(j, "qnl");
+        x.r_perm = get_stack_optional<double>(j, "r_perm");
+        x.r_temp = get_stack_optional<double>(j, "r_temp");
+        x.t_blade = get_stack_optional<double>(j, "t_blade");
+        x.t_g = get_stack_optional<double>(j, "t_g");
+        x.t_n = get_stack_optional<double>(j, "t_n");
+        x.t_np = get_stack_optional<double>(j, "t_np");
+        x.t_w = get_stack_optional<std::variant<std::vector<double>, double>>(j, "t_w");
+        x.ttrip = get_stack_optional<int64_t>(j, "ttrip");
+        x.v_elm = get_stack_optional<double>(j, "v_elm");
+        x.k_1 = get_stack_optional<double>(j, "k_1");
+        x.k_2 = get_stack_optional<double>(j, "k_2");
+        x.k_3 = get_stack_optional<double>(j, "k_3");
+        x.k_4 = get_stack_optional<double>(j, "k_4");
+        x.k_5 = get_stack_optional<double>(j, "k_5");
+        x.k_6 = get_stack_optional<double>(j, "k_6");
+        x.k_7 = get_stack_optional<double>(j, "k_7");
+        x.k_8 = get_stack_optional<double>(j, "k_8");
+        x.p_max = get_stack_optional<double>(j, "p_max");
+        x.p_min = get_stack_optional<double>(j, "p_min");
+        x.t_6 = get_stack_optional<double>(j, "t_6");
+        x.t_7 = get_stack_optional<double>(j, "t_7");
+        x.u_c = get_stack_optional<double>(j, "u_c");
+        x.u_o = get_stack_optional<double>(j, "u_o");
+        x.d_t = get_stack_optional<double>(j, "d_t");
+        x.a_1 = get_stack_optional<double>(j, "a_1");
+        x.a_2 = get_stack_optional<double>(j, "a_2");
+        x.a_3 = get_stack_optional<double>(j, "a_3");
+        x.a_4 = get_stack_optional<double>(j, "a_4");
+        x.a_5 = get_stack_optional<double>(j, "a_5");
+        x.a_6 = get_stack_optional<double>(j, "a_6");
+        x.j = get_stack_optional<double>(j, "j");
+        x.dynamic_and_control_k = get_stack_optional<int64_t>(j, "k");
+        x.k_s = get_stack_optional<double>(j, "k_s");
+        x.ls_max = get_stack_optional<double>(j, "ls_max");
+        x.ls_min = get_stack_optional<double>(j, "ls_min");
+        x.t_delay = get_stack_optional<double>(j, "t_delay");
+        x.v_cl = get_stack_optional<double>(j, "v_cl");
+        x.v_cu = get_stack_optional<double>(j, "v_cu");
+        x.mvab = get_stack_optional<double>(j, "mvab");
+        x.theta_0 = get_stack_optional<double>(j, "theta_0");
+        x.k_cc = get_stack_optional<double>(j, "k_cc");
+        x.k_ic = get_stack_optional<double>(j, "k_ic");
+        x.k_iw = get_stack_optional<double>(j, "k_iw");
+        x.k_pc = get_stack_optional<double>(j, "k_pc");
+        x.k_pw = get_stack_optional<double>(j, "k_pw");
+        x.pi_max = get_stack_optional<double>(j, "pi_max");
+        x.pi_min = get_stack_optional<double>(j, "pi_min");
+        x.pi_ratmn = get_stack_optional<double>(j, "pi_ratmn");
+        x.pi_ratmx = get_stack_optional<double>(j, "pi_ratmx");
+        x.t_pi = get_stack_optional<double>(j, "t_pi");
+        x.k_ip = get_stack_optional<double>(j, "k_ip");
+        x.k_pp = get_stack_optional<double>(j, "k_pp");
+        x.p1 = get_stack_optional<double>(j, "p1");
+        x.p2 = get_stack_optional<double>(j, "p2");
+        x.p3 = get_stack_optional<double>(j, "p3");
+        x.p4 = get_stack_optional<double>(j, "p4");
+        x.spd1 = get_stack_optional<double>(j, "spd1");
+        x.spd2 = get_stack_optional<double>(j, "spd2");
+        x.spd3 = get_stack_optional<double>(j, "spd3");
+        x.spd4 = get_stack_optional<double>(j, "spd4");
+        x.t_flag = get_stack_optional<int64_t>(j, "t_flag");
+        x.t_p = get_stack_optional<double>(j, "t_p");
+        x.te_max = get_stack_optional<double>(j, "te_max");
+        x.te_min = get_stack_optional<double>(j, "te_min");
+        x.tw_ref = get_stack_optional<double>(j, "tw_ref");
+        x.d_shaft = get_stack_optional<double>(j, "d_shaft");
+        x.h_g = get_stack_optional<double>(j, "h_g");
+        x.h_t = get_stack_optional<double>(j, "h_t");
+        x.k_shaft = get_stack_optional<double>(j, "k_shaft");
+        x.w_o = get_stack_optional<double>(j, "w_o");
+        x.accel = get_stack_optional<double>(j, "accel");
+        x.brkpt = get_stack_optional<double>(j, "brkpt");
+        x.iqr_max = get_stack_optional<double>(j, "iqr_max");
+        x.iqr_min = get_stack_optional<double>(j, "iqr_min");
+        x.lvpl1 = get_stack_optional<double>(j, "lvpl1");
+        x.lvpl_sw = get_stack_optional<int64_t>(j, "lvpl_sw");
+        x.lvpnt0 = get_stack_optional<double>(j, "lvpnt0");
+        x.lvpnt1 = get_stack_optional<double>(j, "lvpnt1");
+        x.q_min = get_stack_optional<double>(j, "q_min");
+        x.rrpwr = get_stack_optional<double>(j, "rrpwr");
+        x.tfltr = get_stack_optional<double>(j, "tfltr");
+        x.tg = get_stack_optional<double>(j, "tg");
+        x.xe = get_stack_optional<double>(j, "xe");
+        x.zerox = get_stack_optional<double>(j, "zerox");
+        x.dp_max = get_stack_optional<double>(j, "dp_max");
+        x.dp_min = get_stack_optional<double>(j, "dp_min");
+        x.i_max = get_stack_optional<double>(j, "i_max");
+        x.ip1 = get_stack_optional<double>(j, "ip1");
+        x.ip2 = get_stack_optional<double>(j, "ip2");
+        x.ip3 = get_stack_optional<double>(j, "ip3");
+        x.ip4 = get_stack_optional<double>(j, "ip4");
+        x.iq1 = get_stack_optional<double>(j, "iq1");
+        x.iq2 = get_stack_optional<double>(j, "iq2");
+        x.iq3 = get_stack_optional<double>(j, "iq3");
+        x.iq4 = get_stack_optional<double>(j, "iq4");
+        x.iqfrz = get_stack_optional<double>(j, "iqfrz");
+        x.iqh1 = get_stack_optional<double>(j, "iqh1");
+        x.iql1 = get_stack_optional<double>(j, "iql1");
+        x.kqi = get_stack_optional<double>(j, "kqi");
+        x.kqp = get_stack_optional<double>(j, "kqp");
+        x.kqv = get_stack_optional<double>(j, "kqv");
+        x.kvi = get_stack_optional<double>(j, "kvi");
+        x.kvp = get_stack_optional<double>(j, "kvp");
+        x.p_flag = get_stack_optional<int64_t>(j, "p_flag");
+        x.pf_flag = get_stack_optional<int64_t>(j, "pf_flag");
+        x.pq_flag = get_stack_optional<int64_t>(j, "pq_flag");
+        x.q_flag = get_stack_optional<int64_t>(j, "q_flag");
+        x.q_max = get_stack_optional<double>(j, "q_max");
+        x.t_pord = get_stack_optional<double>(j, "t_pord");
+        x.thld = get_stack_optional<double>(j, "thld");
+        x.thld2 = get_stack_optional<double>(j, "thld2");
+        x.tiq = get_stack_optional<double>(j, "tiq");
+        x.tp = get_stack_optional<double>(j, "tp");
+        x.trv = get_stack_optional<double>(j, "trv");
+        x.v_dip = get_stack_optional<double>(j, "v_dip");
+        x.v_flag = get_stack_optional<int64_t>(j, "v_flag");
+        x.v_ref0 = get_stack_optional<double>(j, "v_ref0");
+        x.v_ref1 = get_stack_optional<double>(j, "v_ref1");
+        x.v_up = get_stack_optional<double>(j, "v_up");
+        x.vp1 = get_stack_optional<double>(j, "vp1");
+        x.vp2 = get_stack_optional<double>(j, "vp2");
+        x.vp3 = get_stack_optional<double>(j, "vp3");
+        x.vp4 = get_stack_optional<double>(j, "vp4");
+        x.vq1 = get_stack_optional<double>(j, "vq1");
+        x.vq2 = get_stack_optional<double>(j, "vq2");
+        x.vq3 = get_stack_optional<double>(j, "vq3");
+        x.vq4 = get_stack_optional<double>(j, "vq4");
+        x.dbd = get_stack_optional<double>(j, "dbd");
+        x.ddn = get_stack_optional<double>(j, "ddn");
+        x.dup = get_stack_optional<double>(j, "dup");
+        x.fdbd1 = get_stack_optional<double>(j, "fdbd1");
+        x.fdbd2 = get_stack_optional<double>(j, "fdbd2");
+        x.fe_max = get_stack_optional<double>(j, "fe_max");
+        x.fe_min = get_stack_optional<double>(j, "fe_min");
+        x.frqflg = get_stack_optional<int64_t>(j, "frqflg");
+        x.kig = get_stack_optional<double>(j, "kig");
+        x.kpg = get_stack_optional<double>(j, "kpg");
+        x.monitored_branch = get_stack_optional<std::variant<int64_t, std::string>>(j, "monitored_branch");
+        x.monitored_branch_type = get_stack_optional<MonitoredBranchType>(j, "monitored_branch_type");
+        x.monitored_bus = get_stack_optional<std::variant<int64_t, std::string>>(j, "monitored_bus");
+        x.outflag = get_stack_optional<int64_t>(j, "outflag");
+        x.puflag = get_stack_optional<int64_t>(j, "puflag");
+        x.r_c = get_stack_optional<double>(j, "r_c");
+        x.refflg = get_stack_optional<int64_t>(j, "refflg");
+        x.t_lag = get_stack_optional<double>(j, "t_lag");
+        x.tft = get_stack_optional<double>(j, "tft");
+        x.tfv = get_stack_optional<double>(j, "tfv");
+        x.vcmpflg = get_stack_optional<int64_t>(j, "vcmpflg");
+        x.vfrz = get_stack_optional<double>(j, "vfrz");
+        x.x_c = get_stack_optional<double>(j, "x_c");
+        x.k_w = get_stack_optional<std::vector<double>>(j, "k_w");
+        x.k_z = get_stack_optional<std::vector<double>>(j, "k_z");
+    }
+
+    inline void to_json(json & j, const DynamicAndControl & x) {
+        j = json::object();
+        j["category"] = x.category;
+        j["D"] = x.d;
+        j["gen"] = x.gen;
+        j["H"] = x.h;
+        j["l_1"] = x.l_1;
+        j["l_d"] = x.l_d;
+        j["l_pd"] = x.l_pd;
+        j["l_ppd"] = x.l_ppd;
+        j["l_pq"] = x.l_pq;
+        j["l_q"] = x.l_q;
+        j["model"] = x.model;
+        j["r_a"] = x.r_a;
+        j["r_comp"] = x.r_comp;
+        j["s_1"] = x.s_1;
+        j["s_12"] = x.s_12;
+        j["t_pdo"] = x.t_pdo;
+        j["t_ppdo"] = x.t_ppdo;
+        j["t_ppqo"] = x.t_ppqo;
+        j["t_pqo"] = x.t_pqo;
+        j["uid"] = x.uid;
+        j["x_comp"] = x.x_comp;
+        j["e_1"] = x.e_1;
+        j["e_2"] = x.e_2;
+        j["k_a"] = x.k_a;
+        j["k_c"] = x.k_c;
+        j["k_d"] = x.k_d;
+        j["k_e"] = x.k_e;
+        j["k_f"] = x.k_f;
+        j["s_e1"] = x.s_e1;
+        j["s_e2"] = x.s_e2;
+        j["spdmlt"] = x.spdmlt;
+        j["t_a"] = x.t_a;
+        j["t_b"] = x.t_b;
+        j["t_c"] = x.t_c;
+        j["t_e"] = x.t_e;
+        j["t_f"] = x.t_f;
+        j["t_r"] = x.t_r;
+        j["va_max"] = x.va_max;
+        j["va_min"] = x.va_min;
+        j["vr_max"] = x.vr_max;
+        j["vr_min"] = x.vr_min;
+        j["k_h"] = x.k_h;
+        j["t_h"] = x.t_h;
+        j["t_j"] = x.t_j;
+        j["t_k"] = x.t_k;
+        j["vfe_lim"] = x.vfe_lim;
+        j["vh_max"] = x.vh_max;
+        j["exclim"] = x.exclim;
+        j["uelin"] = x.uelin;
+        j["ang_p"] = x.ang_p;
+        j["k_g"] = x.k_g;
+        j["k_i"] = x.k_i;
+        j["k_im"] = x.k_im;
+        j["k_ir"] = x.k_ir;
+        j["k_p"] = x.k_p;
+        j["k_pm"] = x.k_pm;
+        j["k_pr"] = x.k_pr;
+        j["vb_max"] = x.vb_max;
+        j["vg_max"] = x.vg_max;
+        j["vm_max"] = x.vm_max;
+        j["vm_min"] = x.vm_min;
+        j["x_l"] = x.x_l;
+        j["k_b"] = x.k_b;
+        j["k_l"] = x.k_l;
+        j["v_lr"] = x.v_lr;
+        j["efd_max"] = x.efd_max;
+        j["efd_min"] = x.efd_min;
+        j["t_a1"] = x.t_a1;
+        j["t_a2"] = x.t_a2;
+        j["t_a3"] = x.t_a3;
+        j["t_a4"] = x.t_a4;
+        j["t_f1"] = x.t_f1;
+        j["t_f2"] = x.t_f2;
+        j["v_r1"] = x.v_r1;
+        j["v_r2"] = x.v_r2;
+        j["s_pare"] = x.s_pare;
+        j["c_switch"] = x.c_switch;
+        j["e_max"] = x.e_max;
+        j["e_min"] = x.e_min;
+        j["K"] = x.k;
+        j["r_crfd"] = x.r_crfd;
+        j["t_atb"] = x.t_atb;
+        j["a"] = x.a;
+        j["b"] = x.b;
+        j["d_turb"] = x.d_turb;
+        j["db1"] = x.db1;
+        j["db2"] = x.db2;
+        j["eps"] = x.eps;
+        j["f_idle"] = x.f_idle;
+        j["g_v1"] = x.g_v1;
+        j["g_v2"] = x.g_v2;
+        j["g_v3"] = x.g_v3;
+        j["g_v4"] = x.g_v4;
+        j["g_v5"] = x.g_v5;
+        j["g_v6"] = x.g_v6;
+        j["k_t"] = x.k_t;
+        j["l_max"] = x.l_max;
+        j["l_oadinc"] = x.l_oadinc;
+        j["lt_rate"] = x.lt_rate;
+        j["mw_cap"] = x.mw_cap;
+        j["p_gv1"] = x.p_gv1;
+        j["p_gv2"] = x.p_gv2;
+        j["p_gv3"] = x.p_gv3;
+        j["p_gv4"] = x.p_gv4;
+        j["p_gv5"] = x.p_gv5;
+        j["p_gv6"] = x.p_gv6;
+        j["R"] = x.r;
+        j["r_max"] = x.r_max;
+        j["t_1"] = x.t_1;
+        j["t_2"] = x.t_2;
+        j["t_3"] = x.t_3;
+        j["t_4"] = x.t_4;
+        j["t_5"] = x.t_5;
+        j["t_ltr"] = x.t_ltr;
+        j["v_max"] = x.v_max;
+        j["v_min"] = x.v_min;
+        j["aset"] = x.aset;
+        j["d_m"] = x.d_m;
+        j["db"] = x.db;
+        j["f_lag"] = x.f_lag;
+        j["k_dgov"] = x.k_dgov;
+        j["k_igov"] = x.k_igov;
+        j["k_iload"] = x.k_iload;
+        j["k_imw"] = x.k_imw;
+        j["k_pgov"] = x.k_pgov;
+        j["k_pload"] = x.k_pload;
+        j["k_trub"] = x.k_trub;
+        j["l_dref"] = x.l_dref;
+        j["max_err"] = x.max_err;
+        j["min_err"] = x.min_err;
+        j["p_mwset"] = x.p_mwset;
+        j["r"] = x.dynamic_and_control_r;
+        j["r_close"] = x.r_close;
+        j["r_down"] = x.r_down;
+        j["r_open"] = x.r_open;
+        j["r_select"] = x.r_select;
+        j["r_up"] = x.r_up;
+        j["t_act"] = x.t_act;
+        j["t_dgov"] = x.t_dgov;
+        j["t_eng"] = x.t_eng;
+        j["t_fload"] = x.t_fload;
+        j["t_pelec"] = x.t_pelec;
+        j["t_sa"] = x.t_sa;
+        j["t_sb"] = x.t_sb;
+        j["wfnl"] = x.wfnl;
+        j["a_t"] = x.a_t;
+        j["b_gv0"] = x.b_gv0;
+        j["b_gv1"] = x.b_gv1;
+        j["b_gv2"] = x.b_gv2;
+        j["b_gv3"] = x.b_gv3;
+        j["b_gv4"] = x.b_gv4;
+        j["b_gv5"] = x.b_gv5;
+        j["b_max"] = x.b_max;
+        j["g_max"] = x.g_max;
+        j["g_min"] = x.g_min;
+        j["hdam"] = x.hdam;
+        j["qnl"] = x.qnl;
+        j["r_perm"] = x.r_perm;
+        j["r_temp"] = x.r_temp;
+        j["t_blade"] = x.t_blade;
+        j["t_g"] = x.t_g;
+        j["t_n"] = x.t_n;
+        j["t_np"] = x.t_np;
+        j["t_w"] = x.t_w;
+        j["ttrip"] = x.ttrip;
+        j["v_elm"] = x.v_elm;
+        j["k_1"] = x.k_1;
+        j["k_2"] = x.k_2;
+        j["k_3"] = x.k_3;
+        j["k_4"] = x.k_4;
+        j["k_5"] = x.k_5;
+        j["k_6"] = x.k_6;
+        j["k_7"] = x.k_7;
+        j["k_8"] = x.k_8;
+        j["p_max"] = x.p_max;
+        j["p_min"] = x.p_min;
+        j["t_6"] = x.t_6;
+        j["t_7"] = x.t_7;
+        j["u_c"] = x.u_c;
+        j["u_o"] = x.u_o;
+        j["d_t"] = x.d_t;
+        j["a_1"] = x.a_1;
+        j["a_2"] = x.a_2;
+        j["a_3"] = x.a_3;
+        j["a_4"] = x.a_4;
+        j["a_5"] = x.a_5;
+        j["a_6"] = x.a_6;
+        j["j"] = x.j;
+        j["k"] = x.dynamic_and_control_k;
+        j["k_s"] = x.k_s;
+        j["ls_max"] = x.ls_max;
+        j["ls_min"] = x.ls_min;
+        j["t_delay"] = x.t_delay;
+        j["v_cl"] = x.v_cl;
+        j["v_cu"] = x.v_cu;
+        j["mvab"] = x.mvab;
+        j["theta_0"] = x.theta_0;
+        j["k_cc"] = x.k_cc;
+        j["k_ic"] = x.k_ic;
+        j["k_iw"] = x.k_iw;
+        j["k_pc"] = x.k_pc;
+        j["k_pw"] = x.k_pw;
+        j["pi_max"] = x.pi_max;
+        j["pi_min"] = x.pi_min;
+        j["pi_ratmn"] = x.pi_ratmn;
+        j["pi_ratmx"] = x.pi_ratmx;
+        j["t_pi"] = x.t_pi;
+        j["k_ip"] = x.k_ip;
+        j["k_pp"] = x.k_pp;
+        j["p1"] = x.p1;
+        j["p2"] = x.p2;
+        j["p3"] = x.p3;
+        j["p4"] = x.p4;
+        j["spd1"] = x.spd1;
+        j["spd2"] = x.spd2;
+        j["spd3"] = x.spd3;
+        j["spd4"] = x.spd4;
+        j["t_flag"] = x.t_flag;
+        j["t_p"] = x.t_p;
+        j["te_max"] = x.te_max;
+        j["te_min"] = x.te_min;
+        j["tw_ref"] = x.tw_ref;
+        j["d_shaft"] = x.d_shaft;
+        j["h_g"] = x.h_g;
+        j["h_t"] = x.h_t;
+        j["k_shaft"] = x.k_shaft;
+        j["w_o"] = x.w_o;
+        j["accel"] = x.accel;
+        j["brkpt"] = x.brkpt;
+        j["iqr_max"] = x.iqr_max;
+        j["iqr_min"] = x.iqr_min;
+        j["lvpl1"] = x.lvpl1;
+        j["lvpl_sw"] = x.lvpl_sw;
+        j["lvpnt0"] = x.lvpnt0;
+        j["lvpnt1"] = x.lvpnt1;
+        j["q_min"] = x.q_min;
+        j["rrpwr"] = x.rrpwr;
+        j["tfltr"] = x.tfltr;
+        j["tg"] = x.tg;
+        j["xe"] = x.xe;
+        j["zerox"] = x.zerox;
+        j["dp_max"] = x.dp_max;
+        j["dp_min"] = x.dp_min;
+        j["i_max"] = x.i_max;
+        j["ip1"] = x.ip1;
+        j["ip2"] = x.ip2;
+        j["ip3"] = x.ip3;
+        j["ip4"] = x.ip4;
+        j["iq1"] = x.iq1;
+        j["iq2"] = x.iq2;
+        j["iq3"] = x.iq3;
+        j["iq4"] = x.iq4;
+        j["iqfrz"] = x.iqfrz;
+        j["iqh1"] = x.iqh1;
+        j["iql1"] = x.iql1;
+        j["kqi"] = x.kqi;
+        j["kqp"] = x.kqp;
+        j["kqv"] = x.kqv;
+        j["kvi"] = x.kvi;
+        j["kvp"] = x.kvp;
+        j["p_flag"] = x.p_flag;
+        j["pf_flag"] = x.pf_flag;
+        j["pq_flag"] = x.pq_flag;
+        j["q_flag"] = x.q_flag;
+        j["q_max"] = x.q_max;
+        j["t_pord"] = x.t_pord;
+        j["thld"] = x.thld;
+        j["thld2"] = x.thld2;
+        j["tiq"] = x.tiq;
+        j["tp"] = x.tp;
+        j["trv"] = x.trv;
+        j["v_dip"] = x.v_dip;
+        j["v_flag"] = x.v_flag;
+        j["v_ref0"] = x.v_ref0;
+        j["v_ref1"] = x.v_ref1;
+        j["v_up"] = x.v_up;
+        j["vp1"] = x.vp1;
+        j["vp2"] = x.vp2;
+        j["vp3"] = x.vp3;
+        j["vp4"] = x.vp4;
+        j["vq1"] = x.vq1;
+        j["vq2"] = x.vq2;
+        j["vq3"] = x.vq3;
+        j["vq4"] = x.vq4;
+        j["dbd"] = x.dbd;
+        j["ddn"] = x.ddn;
+        j["dup"] = x.dup;
+        j["fdbd1"] = x.fdbd1;
+        j["fdbd2"] = x.fdbd2;
+        j["fe_max"] = x.fe_max;
+        j["fe_min"] = x.fe_min;
+        j["frqflg"] = x.frqflg;
+        j["kig"] = x.kig;
+        j["kpg"] = x.kpg;
+        j["monitored_branch"] = x.monitored_branch;
+        j["monitored_branch_type"] = x.monitored_branch_type;
+        j["monitored_bus"] = x.monitored_bus;
+        j["outflag"] = x.outflag;
+        j["puflag"] = x.puflag;
+        j["r_c"] = x.r_c;
+        j["refflg"] = x.refflg;
+        j["t_lag"] = x.t_lag;
+        j["tft"] = x.tft;
+        j["tfv"] = x.tfv;
+        j["vcmpflg"] = x.vcmpflg;
+        j["vfrz"] = x.vfrz;
+        j["x_c"] = x.x_c;
+        j["k_w"] = x.k_w;
+        j["k_z"] = x.k_z;
+    }
+
     inline void from_json(const json & j, CostPgParametersClass& x) {
         x.x = get_stack_optional<std::vector<double>>(j, "x");
         x.y = get_stack_optional<std::vector<double>>(j, "y");
@@ -2024,7 +4214,7 @@ namespace ctm_schemas {
     }
 
     inline void from_json(const json & j, NetworkGen& x) {
-        x.bus = j.at("bus").get<BusFr>();
+        x.bus = j.at("bus").get<BusRefElement>();
         x.cost_pg_model = get_stack_optional<CostPgModel>(j, "cost_pg_model");
         x.cost_pg_parameters = get_stack_optional<std::variant<std::vector<double>, CostPgParametersClass>>(j, "cost_pg_parameters");
         x.down_time_lb = get_stack_optional<double>(j, "down_time_lb");
@@ -2053,7 +4243,7 @@ namespace ctm_schemas {
         x.startup_time_hot = get_stack_optional<double>(j, "startup_time_hot");
         x.startup_time_warm = get_stack_optional<double>(j, "startup_time_warm");
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.vm_setpoint = get_stack_optional<std::variant<CmUbAClass, double>>(j, "vm_setpoint");
     }
 
@@ -2107,8 +4297,8 @@ namespace ctm_schemas {
 
     inline void from_json(const json & j, NetworkHvdcP2P& x) {
         x.base_kv_dc = get_stack_optional<double>(j, "base_kv_dc");
-        x.bus_fr = j.at("bus_fr").get<BusFr>();
-        x.bus_to = j.at("bus_to").get<BusFr>();
+        x.bus_fr = j.at("bus_fr").get<BusRefElement>();
+        x.bus_to = j.at("bus_to").get<BusRefElement>();
         x.cm_ub_fr = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_fr");
         x.cm_ub_to = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_to");
         x.ext = get_untyped(j, "ext");
@@ -2135,7 +4325,7 @@ namespace ctm_schemas {
         x.status = j.at("status").get<int64_t>();
         x.technology = get_stack_optional<Technology>(j, "technology");
         x.transient_outage_rate = get_stack_optional<double>(j, "transient_outage_rate");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.vm_dc_lb = get_stack_optional<double>(j, "vm_dc_lb");
         x.vm_dc_ub = get_stack_optional<double>(j, "vm_dc_ub");
     }
@@ -2177,7 +4367,7 @@ namespace ctm_schemas {
     }
 
     inline void from_json(const json & j, Load& x) {
-        x.bus = j.at("bus").get<BusFr>();
+        x.bus = j.at("bus").get<BusRefElement>();
         x.ext = get_untyped(j, "ext");
         x.name = get_stack_optional<std::string>(j, "name");
         x.nominal_mva = get_stack_optional<double>(j, "nominal_mva");
@@ -2188,7 +4378,7 @@ namespace ctm_schemas {
         x.qd_i = get_stack_optional<std::variant<CmUbAClass, double>>(j, "qd_i");
         x.qd_y = get_stack_optional<std::variant<CmUbAClass, double>>(j, "qd_y");
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const Load & x) {
@@ -2208,15 +4398,15 @@ namespace ctm_schemas {
     }
 
     inline void from_json(const json & j, NetworkSwitch& x) {
-        x.bus_fr = j.at("bus_fr").get<BusFr>();
-        x.bus_to = j.at("bus_to").get<BusFr>();
+        x.bus_fr = j.at("bus_fr").get<BusRefElement>();
+        x.bus_to = j.at("bus_to").get<BusRefElement>();
         x.cm_ub = get_stack_optional<double>(j, "cm_ub");
         x.ext = get_untyped(j, "ext");
         x.name = get_stack_optional<std::string>(j, "name");
         x.nominal_mva = get_stack_optional<double>(j, "nominal_mva");
         x.sm_ub = get_stack_optional<double>(j, "sm_ub");
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const NetworkSwitch & x) {
@@ -2235,12 +4425,12 @@ namespace ctm_schemas {
     inline void from_json(const json & j, NetworkReserve& x) {
         x.ext = get_untyped(j, "ext");
         x.name = get_stack_optional<std::string>(j, "name");
-        x.participants = get_stack_optional<std::vector<BusFr>>(j, "participants");
+        x.participants = get_stack_optional<std::vector<BusRefElement>>(j, "participants");
         x.pg_down = get_stack_optional<std::variant<CmUbAClass, double>>(j, "pg_down");
         x.pg_up = get_stack_optional<std::variant<CmUbAClass, double>>(j, "pg_up");
         x.reserve_type = j.at("reserve_type").get<ReserveType>();
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const NetworkReserve & x) {
@@ -2257,14 +4447,14 @@ namespace ctm_schemas {
 
     inline void from_json(const json & j, NetworkShunt& x) {
         x.bs = j.at("bs").get<Bs>();
-        x.bus = j.at("bus").get<BusFr>();
+        x.bus = j.at("bus").get<BusRefElement>();
         x.ext = get_untyped(j, "ext");
         x.gs = j.at("gs").get<Gs>();
         x.name = get_stack_optional<std::string>(j, "name");
         x.nominal_mva = get_stack_optional<double>(j, "nominal_mva");
         x.num_steps_ub = j.at("num_steps_ub").get<NumStepsUbUnion>();
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const NetworkShunt & x) {
@@ -2281,7 +4471,7 @@ namespace ctm_schemas {
     }
 
     inline void from_json(const json & j, NetworkStorage& x) {
-        x.bus = j.at("bus").get<BusFr>();
+        x.bus = j.at("bus").get<BusRefElement>();
         x.charge_efficiency = j.at("charge_efficiency").get<ChargeEfficiency>();
         x.charge_ub = get_stack_optional<std::variant<CmUbAClass, double>>(j, "charge_ub");
         x.cm_ub = get_stack_optional<double>(j, "cm_ub");
@@ -2299,7 +4489,7 @@ namespace ctm_schemas {
         x.qs_ub = get_stack_optional<std::variant<CmUbAClass, double>>(j, "qs_ub");
         x.sm_ub = get_stack_optional<double>(j, "sm_ub");
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const NetworkStorage & x) {
@@ -2327,8 +4517,8 @@ namespace ctm_schemas {
 
     inline void from_json(const json & j, NetworkTransformer& x) {
         x.b = j.at("b").get<double>();
-        x.bus_fr = j.at("bus_fr").get<BusFr>();
-        x.bus_to = j.at("bus_to").get<BusFr>();
+        x.bus_fr = j.at("bus_fr").get<BusRefElement>();
+        x.bus_to = j.at("bus_to").get<BusRefElement>();
         x.cm_ub_a = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_a");
         x.cm_ub_b = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_b");
         x.cm_ub_c = get_stack_optional<std::variant<CmUbAClass, double>>(j, "cm_ub_c");
@@ -2349,7 +4539,7 @@ namespace ctm_schemas {
         x.tm_lb = get_stack_optional<double>(j, "tm_lb");
         x.tm_steps = get_stack_optional<int64_t>(j, "tm_steps");
         x.tm_ub = get_stack_optional<double>(j, "tm_ub");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.x = j.at("x").get<double>();
     }
 
@@ -2386,7 +4576,7 @@ namespace ctm_schemas {
         x.ext = get_untyped(j, "ext");
         x.name = get_stack_optional<std::string>(j, "name");
         x.status = j.at("status").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const Zone & x) {
@@ -2401,6 +4591,7 @@ namespace ctm_schemas {
         x.ac_line = get_stack_optional<std::vector<NetworkAcLine>>(j, "ac_line");
         x.area = j.at("area").get<std::vector<Area>>();
         x.bus = j.at("bus").get<std::vector<NetworkBus>>();
+        x.dynamic_and_control = get_stack_optional<std::vector<DynamicAndControl>>(j, "dynamic_and_control");
         x.gen = j.at("gen").get<std::vector<NetworkGen>>();
         x.global_params = j.at("global_params").get<NetworkGlobalParams>();
         x.hvdc_p2_p = get_stack_optional<std::vector<NetworkHvdcP2P>>(j, "hvdc_p2p");
@@ -2418,6 +4609,7 @@ namespace ctm_schemas {
         j["ac_line"] = x.ac_line;
         j["area"] = x.area;
         j["bus"] = x.bus;
+        j["dynamic_and_control"] = x.dynamic_and_control;
         j["gen"] = x.gen;
         j["global_params"] = x.global_params;
         j["hvdc_p2p"] = x.hvdc_p2_p;
@@ -2432,7 +4624,7 @@ namespace ctm_schemas {
 
     inline void from_json(const json & j, TemporalBoundaryBus& x) {
         x.ext = get_untyped(j, "ext");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.va = j.at("va").get<double>();
         x.vm = get_stack_optional<double>(j, "vm");
     }
@@ -2451,7 +4643,7 @@ namespace ctm_schemas {
         x.in_service_time = get_stack_optional<double>(j, "in_service_time");
         x.pg = j.at("pg").get<double>();
         x.qg = get_stack_optional<double>(j, "qg");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const TemporalBoundaryGen & x) {
@@ -2479,7 +4671,7 @@ namespace ctm_schemas {
         x.pdc_to = j.at("pdc_to").get<double>();
         x.qdc_fr = get_stack_optional<double>(j, "qdc_fr");
         x.qdc_to = get_stack_optional<double>(j, "qdc_to");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.vm_dc_fr = get_stack_optional<double>(j, "vm_dc_fr");
         x.vm_dc_to = get_stack_optional<double>(j, "vm_dc_to");
     }
@@ -2499,7 +4691,7 @@ namespace ctm_schemas {
     inline void from_json(const json & j, TemporalBoundaryShunt& x) {
         x.ext = get_untyped(j, "ext");
         x.num_steps = j.at("num_steps").get<NumStepsUbUnion>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const TemporalBoundaryShunt & x) {
@@ -2514,7 +4706,7 @@ namespace ctm_schemas {
         x.ext = get_untyped(j, "ext");
         x.ps = get_stack_optional<double>(j, "ps");
         x.qs = get_stack_optional<double>(j, "qs");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const TemporalBoundaryStorage & x) {
@@ -2529,7 +4721,7 @@ namespace ctm_schemas {
     inline void from_json(const json & j, TemporalBoundarySwitch& x) {
         x.ext = get_untyped(j, "ext");
         x.state = j.at("state").get<int64_t>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const TemporalBoundarySwitch & x) {
@@ -2543,7 +4735,7 @@ namespace ctm_schemas {
         x.ext = get_untyped(j, "ext");
         x.ta = j.at("ta").get<double>();
         x.tm = j.at("tm").get<double>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const TemporalBoundaryTransformer & x) {
@@ -2582,7 +4774,7 @@ namespace ctm_schemas {
         x.name = get_stack_optional<std::vector<std::string>>(j, "name");
         x.path_to_file = get_stack_optional<std::variant<std::vector<std::string>, std::string>>(j, "path_to_file");
         x.timestamp = get_stack_optional<std::vector<double>>(j, "timestamp");
-        x.uid = j.at("uid").get<std::vector<BusFr>>();
+        x.uid = j.at("uid").get<std::vector<BusRefElement>>();
         x.values = get_stack_optional<std::vector<std::vector<nlohmann::json>>>(j, "values");
     }
 
@@ -2613,7 +4805,7 @@ namespace ctm_schemas {
 
     inline void from_json(const json & j, CtmSolutionSchema& x) {
         x.scale_factor = j.at("scale_factor").get<double>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const CtmSolutionSchema & x) {
@@ -2628,7 +4820,7 @@ namespace ctm_schemas {
         x.pl_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "pl_to");
         x.ql_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "ql_fr");
         x.ql_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "ql_to");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionAcLine & x) {
@@ -2647,7 +4839,7 @@ namespace ctm_schemas {
         x.p_lambda = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "p_lambda");
         x.q_imbalance = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "q_imbalance");
         x.q_lambda = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "q_lambda");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.va = j.at("va").get<PlFr>();
         x.vm = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "vm");
     }
@@ -2666,7 +4858,7 @@ namespace ctm_schemas {
 
     inline void from_json(const json & j, ReserveProvision& x) {
         x.rg = j.at("rg").get<Rg>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const ReserveProvision & x) {
@@ -2681,7 +4873,7 @@ namespace ctm_schemas {
         x.pg = j.at("pg").get<PlFr>();
         x.qg = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qg");
         x.reserve_provision = get_stack_optional<std::vector<ReserveProvision>>(j, "reserve_provision");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionGen & x) {
@@ -2711,7 +4903,7 @@ namespace ctm_schemas {
         x.pdc_to = j.at("pdc_to").get<PlFr>();
         x.qdc_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qdc_fr");
         x.qdc_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qdc_to");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
         x.vm_dc = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "vm_dc");
     }
 
@@ -2729,7 +4921,7 @@ namespace ctm_schemas {
     inline void from_json(const json & j, SolutionReserve& x) {
         x.ext = get_untyped(j, "ext");
         x.shortfall = j.at("shortfall").get<PlFr>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionReserve & x) {
@@ -2742,7 +4934,7 @@ namespace ctm_schemas {
     inline void from_json(const json & j, SolutionShunt& x) {
         x.ext = get_untyped(j, "ext");
         x.num_steps = j.at("num_steps").get<PurpleNumSteps>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionShunt & x) {
@@ -2757,7 +4949,7 @@ namespace ctm_schemas {
         x.psw_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "psw_fr");
         x.qsw_fr = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qsw_fr");
         x.state = j.at("state").get<InService>();
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionSwitch & x) {
@@ -2776,7 +4968,7 @@ namespace ctm_schemas {
         x.ext = get_untyped(j, "ext");
         x.ps = j.at("ps").get<PlFr>();
         x.qs = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qs");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionStorage & x) {
@@ -2798,7 +4990,7 @@ namespace ctm_schemas {
         x.qt_to = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "qt_to");
         x.ta = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "ta");
         x.tm = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "tm");
-        x.uid = j.at("uid").get<BusFr>();
+        x.uid = j.at("uid").get<BusRefElement>();
     }
 
     inline void to_json(json & j, const SolutionTransformer & x) {
@@ -2845,7 +5037,7 @@ namespace ctm_schemas {
         x.name = get_stack_optional<std::vector<std::string>>(j, "name");
         x.path_to_file = get_stack_optional<std::variant<std::vector<std::string>, std::string>>(j, "path_to_file");
         x.timestamp = get_stack_optional<std::vector<double>>(j, "timestamp");
-        x.uid = j.at("uid").get<std::vector<BusFr>>();
+        x.uid = j.at("uid").get<std::vector<BusRefElement>>();
         x.values = get_stack_optional<std::vector<std::vector<nlohmann::json>>>(j, "values");
     }
 
@@ -2877,7 +5069,7 @@ namespace ctm_schemas {
         x.name = get_stack_optional<std::vector<std::string>>(j, "name");
         x.path_to_file = get_stack_optional<std::variant<std::vector<std::string>, std::string>>(j, "path_to_file");
         x.timestamp = get_stack_optional<std::vector<double>>(j, "timestamp");
-        x.uid = j.at("uid").get<std::vector<BusFr>>();
+        x.uid = j.at("uid").get<std::vector<BusRefElement>>();
         x.values = get_stack_optional<std::vector<std::vector<nlohmann::json>>>(j, "values");
     }
 
@@ -2914,6 +5106,111 @@ namespace ctm_schemas {
             case TypeEnum::PQ: j = "PQ"; break;
             case TypeEnum::PV: j = "PV"; break;
             case TypeEnum::SLACK: j = "slack"; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"[object Object]\": " + std::to_string(static_cast<int>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, Category & x) {
+        if (j == "EXCITER") x = Category::EXCITER;
+        else if (j == "MACHINE") x = Category::MACHINE;
+        else if (j == "PRIME_MOVER") x = Category::PRIME_MOVER;
+        else if (j == "STABILIZER") x = Category::STABILIZER;
+        else if (j == "WIND_TURBINE") x = Category::WIND_TURBINE;
+        else { throw std::runtime_error("Input JSON does not conform to schema!"); }
+    }
+
+    inline void to_json(json & j, const Category & x) {
+        switch (x) {
+            case Category::EXCITER: j = "EXCITER"; break;
+            case Category::MACHINE: j = "MACHINE"; break;
+            case Category::PRIME_MOVER: j = "PRIME_MOVER"; break;
+            case Category::STABILIZER: j = "STABILIZER"; break;
+            case Category::WIND_TURBINE: j = "WIND_TURBINE"; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"[object Object]\": " + std::to_string(static_cast<int>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, Model & x) {
+        static std::unordered_map<std::string, Model> enumValues {
+            {"ESAC1A", Model::ESAC1_A},
+            {"ESAC6A", Model::ESAC6_A},
+            {"ESDC1A", Model::ESDC1_A},
+            {"ESDC2A", Model::ESDC2_A},
+            {"ESST4B", Model::ESST4_B},
+            {"EXAC1", Model::EXAC1},
+            {"EXAC2", Model::EXAC2},
+            {"EXPIC1", Model::EXPIC1},
+            {"GAST", Model::GAST},
+            {"GENROU", Model::GENROU},
+            {"GENSAL", Model::GENSAL},
+            {"GGOV1", Model::GGOV1},
+            {"HYGOV", Model::HYGOV},
+            {"IEEEG1", Model::IEEEG1},
+            {"IEEEST", Model::IEEEST},
+            {"IEEET1", Model::IEEET1},
+            {"REEC_A", Model::REEC_A},
+            {"REGC_A", Model::REGC_A},
+            {"REPC_A", Model::REPC_A},
+            {"REPC_B", Model::REPC_B},
+            {"SCRX", Model::SCRX},
+            {"SEXS", Model::SEXS},
+            {"TGOV1", Model::TGOV1},
+            {"WTGA_A", Model::WTGA_A},
+            {"WTGP_A", Model::WTGP_A},
+            {"WTGQ_A", Model::WTGQ_A},
+            {"WTGT_A", Model::WTGT_A},
+        };
+        auto iter = enumValues.find(j.get<std::string>());
+        if (iter != enumValues.end()) {
+            x = iter->second;
+        }
+    }
+
+    inline void to_json(json & j, const Model & x) {
+        switch (x) {
+            case Model::ESAC1_A: j = "ESAC1A"; break;
+            case Model::ESAC6_A: j = "ESAC6A"; break;
+            case Model::ESDC1_A: j = "ESDC1A"; break;
+            case Model::ESDC2_A: j = "ESDC2A"; break;
+            case Model::ESST4_B: j = "ESST4B"; break;
+            case Model::EXAC1: j = "EXAC1"; break;
+            case Model::EXAC2: j = "EXAC2"; break;
+            case Model::EXPIC1: j = "EXPIC1"; break;
+            case Model::GAST: j = "GAST"; break;
+            case Model::GENROU: j = "GENROU"; break;
+            case Model::GENSAL: j = "GENSAL"; break;
+            case Model::GGOV1: j = "GGOV1"; break;
+            case Model::HYGOV: j = "HYGOV"; break;
+            case Model::IEEEG1: j = "IEEEG1"; break;
+            case Model::IEEEST: j = "IEEEST"; break;
+            case Model::IEEET1: j = "IEEET1"; break;
+            case Model::REEC_A: j = "REEC_A"; break;
+            case Model::REGC_A: j = "REGC_A"; break;
+            case Model::REPC_A: j = "REPC_A"; break;
+            case Model::REPC_B: j = "REPC_B"; break;
+            case Model::SCRX: j = "SCRX"; break;
+            case Model::SEXS: j = "SEXS"; break;
+            case Model::TGOV1: j = "TGOV1"; break;
+            case Model::WTGA_A: j = "WTGA_A"; break;
+            case Model::WTGP_A: j = "WTGP_A"; break;
+            case Model::WTGQ_A: j = "WTGQ_A"; break;
+            case Model::WTGT_A: j = "WTGT_A"; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"[object Object]\": " + std::to_string(static_cast<int>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, MonitoredBranchType & x) {
+        if (j == "AC_LINE") x = MonitoredBranchType::AC_LINE;
+        else if (j == "HVDC_P2P") x = MonitoredBranchType::HVDC_P2_P;
+        else if (j == "TRASFORMER") x = MonitoredBranchType::TRASFORMER;
+        else { throw std::runtime_error("Input JSON does not conform to schema!"); }
+    }
+
+    inline void to_json(json & j, const MonitoredBranchType & x) {
+        switch (x) {
+            case MonitoredBranchType::AC_LINE: j = "AC_LINE"; break;
+            case MonitoredBranchType::HVDC_P2_P: j = "HVDC_P2P"; break;
+            case MonitoredBranchType::TRASFORMER: j = "TRASFORMER"; break;
             default: throw std::runtime_error("Unexpected value in enumeration \"[object Object]\": " + std::to_string(static_cast<int>(x)));
         }
     }
@@ -3130,6 +5427,71 @@ namespace nlohmann {
         }
     }
 
+    inline void adl_serializer<std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string>>::from_json(const json & j, std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string> & x) {
+        if (j.is_number_integer())
+            x = j.get<int64_t>();
+        else if (j.is_string())
+            x = j.get<std::string>();
+        else if (j.is_array())
+            x = j.get<std::vector<ctm_schemas::BusRefElement>>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string>>::to_json(json & j, const std::variant<std::vector<ctm_schemas::BusRefElement>, int64_t, std::string> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<std::vector<ctm_schemas::BusRefElement>>(x);
+                break;
+            case 1:
+                j = std::get<int64_t>(x);
+                break;
+            case 2:
+                j = std::get<std::string>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void adl_serializer<std::variant<double, int64_t>>::from_json(const json & j, std::variant<double, int64_t> & x) {
+        if (j.is_number_integer())
+            x = j.get<int64_t>();
+        else if (j.is_number())
+            x = j.get<double>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<double, int64_t>>::to_json(json & j, const std::variant<double, int64_t> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<double>(x);
+                break;
+            case 1:
+                j = std::get<int64_t>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void adl_serializer<std::variant<std::vector<double>, double>>::from_json(const json & j, std::variant<std::vector<double>, double> & x) {
+        if (j.is_number())
+            x = j.get<double>();
+        else if (j.is_array())
+            x = j.get<std::vector<double>>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<std::vector<double>, double>>::to_json(json & j, const std::variant<std::vector<double>, double> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<std::vector<double>>(x);
+                break;
+            case 1:
+                j = std::get<double>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
     inline void adl_serializer<std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass>>::from_json(const json & j, std::variant<std::vector<double>, ctm_schemas::CostPgParametersClass> & x) {
         if (j.is_object())
             x = j.get<ctm_schemas::CostPgParametersClass>();
@@ -3165,26 +5527,6 @@ namespace nlohmann {
                 break;
             case 1:
                 j = std::get<int64_t>(x);
-                break;
-            default: throw std::runtime_error("Input JSON does not conform to schema!");
-        }
-    }
-
-    inline void adl_serializer<std::variant<std::vector<double>, double>>::from_json(const json & j, std::variant<std::vector<double>, double> & x) {
-        if (j.is_number())
-            x = j.get<double>();
-        else if (j.is_array())
-            x = j.get<std::vector<double>>();
-        else throw std::runtime_error("Could not deserialise!");
-    }
-
-    inline void adl_serializer<std::variant<std::vector<double>, double>>::to_json(json & j, const std::variant<std::vector<double>, double> & x) {
-        switch (x.index()) {
-            case 0:
-                j = std::get<std::vector<double>>(x);
-                break;
-            case 1:
-                j = std::get<double>(x);
                 break;
             default: throw std::runtime_error("Input JSON does not conform to schema!");
         }

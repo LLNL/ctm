@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # NOTE: must install datamodel-code-generator from https://github.com/koxudaxi/datamodel-code-generator for this to run
-source ~/.python_environments/for_ctm/bin/activate
+source ~/.local/python_environments/for_ctm/bin/activate
 
 echo "CTM Data Schema"
 datamodel-codegen --collapse-root-models --disable-appending-item-suffix --input ../../json_schemas/ctm_data_schema.json --input-file-type jsonschema --output ctmdata.py --output-model-type pydantic_v2.BaseModel

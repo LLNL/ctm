@@ -269,11 +269,13 @@ function parse_array(name::String, level::Int64, parent::Int64, d::Dict,
     if length(d) == 1
         return "Vector{Any}", Pending[]
     end
-    haskey(d, "items") &&
-        (haskey(d["items"], "\$ref") ||
-         haskey(d["items"], "oneOf") || haskey(d["items"], "allOf") || haskey(d["items"], "anyOf") ||
-         haskey(d["items"], "type")) ||
+    if !haskey(d, "items") || !(haskey(d["items"], "\$ref") ||
+                                haskey(d["items"], "oneOf") ||
+                                haskey(d["items"], "allOf") ||
+                                haskey(d["items"], "anyOf") ||
+                                haskey(d["items"], "type"))
         error("invalid schema for array")
+    end
     eltypename = nothing
     pending = nothing
     if haskey(d["items"], "\$ref")
