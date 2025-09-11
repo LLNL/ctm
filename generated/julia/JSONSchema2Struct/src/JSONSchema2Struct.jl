@@ -178,6 +178,8 @@ function parse_object(name::String, level::Int64,
     # check required
     od.req = zeros(Bool, length(od.members))
     reqidx = indexin(d["required"], od.members)
+    #@show d["required"]
+    #@show od.members
     for i in reqidx
         !isnothing(i) || error("required field not defined")
         od.req[i] = true
@@ -389,29 +391,70 @@ function parse_schema(name::String, d::Dict)::Vector{Union{ObjectDefinition, Ali
         push!(all_parsed, parsed)
         append!(all_pending, pending)
     end
-    # find order to prepend parent name to type for uniqueness
-    names = collect(all_parsed[i].name for i=1:length(all_parsed))
-    rep = repeated_indicator(names)
-    names_rep = names[rep]
-    levels_rep = collect(all_parsed[i].level for i=1:length(all_parsed))[rep]
-    perm = sortperm(collect(zip(names_rep, levels_rep)), by=last)
-    preprend_indexes = ((1:length(all_parsed))[rep])[perm]
-    # prepend parent names
-    for i in preprend_indexes
-        objdef = all_parsed[i]
-        parent = all_parsed[all_parsed[i].parent]
-        ix = findfirst(x->occursin(objdef.name, x), parent.types)
-        @assert !isnothing(ix)
-        oldname = objdef.name
-        newname = parent.name * objdef.name
-        parent.types[ix] = replace(parent.types[ix], oldname=>newname)
-        parent.defaults[ix] = replace(parent.defaults[ix], oldname=>newname)
-        objdef.name = newname
-    end
-    @assert length(unique(collect(all_parsed[i].name
-                                  for i=1:length(all_parsed)))) == length(all_parsed)
+    # combine names as necessary to ensure uniqueness
+    make_names_unique!(all_parsed)
     # return
     return all_parsed
+end
+
+function find_name_in(name::AbstractString, type_expr::AbstractString)
+    if type_expr[(end-1):end] == "()"
+        type_expr = chop(type_expr, head=0, tail=2)
+    end
+    start_pos = 1
+    while start_pos <= length(type_expr)
+        m = match(r"{|}|,| ", type_expr, start_pos)
+        if isnothing(m)
+            end_pos = length(type_expr)
+        else
+            end_pos = m.offset - 1
+        end
+        if name == type_expr[start_pos:end_pos]
+            return start_pos
+        end
+        end_pos != length(type_expr) || break
+        m = match(r"[A-z]", type_expr, end_pos + 1)
+        !isnothing(m) || break
+        start_pos = m.offset
+    end
+    return nothing
+end
+
+function find_name_in(name::AbstractString, v::Vector{<:AbstractString})
+    for i = 1:length(v)
+        start_pos = find_name_in(name, v[i])
+        if !isnothing(start_pos)
+            return i, start_pos
+        end
+    end
+    return nothing, nothing
+end
+
+insert_at_pos(insert_at::AbstractString, insert_what::AbstractString, pos::Int) = 
+    insert_at[1:(pos-1)] * insert_what * insert_at[pos:end]
+
+function make_names_unique!(objdefs::Vector{Union{ObjectDefinition, AliasDefinition}})
+    # find order to prepend (hashed) parent name to (hashed) type for uniqueness
+    names = collect(objdefs[i].name for i=1:length(objdefs))
+    rep = repeated_indicator(names)
+    names_rep = names[rep]
+    levels_rep = collect(objdefs[i].level for i=1:length(objdefs))[rep]
+    perm = sortperm(collect(zip(names_rep, levels_rep)), by=last)
+    preprend_indexes = ((1:length(objdefs))[rep])[perm]
+    # prepend parent names
+    for i in preprend_indexes
+        objdef = objdefs[i]
+        parent = objdefs[objdefs[i].parent]
+        ix, start_pos = find_name_in(objdef.name, parent.types)
+        @assert !isnothing(ix)
+        parent.types[ix] = insert_at_pos(parent.types[ix], parent.name, start_pos)
+        start_pos = find_name_in(objdef.name, parent.defaults[ix])
+        @assert !isnothing(start_pos)
+        parent.defaults[ix] = insert_at_pos(parent.defaults[ix], parent.name, start_pos)
+        objdef.name = parent.name * objdef.name
+    end
+    @assert length(unique(collect(objdefs[i].name
+                                  for i=1:length(objdefs)))) == length(objdefs)
 end
 
 function member_varname(member_name::String)

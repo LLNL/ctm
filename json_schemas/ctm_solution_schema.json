@@ -352,7 +352,7 @@
                             "tm": {
                                 "description": "[-] tap ratio",
                                 "anyOf": [
-                                    { "type": "number" },
+                                    { "$ref": "#/$defs/positive_number" },
                                     { "$ref": "#/$defs/time_series_reference" }
                                 ]
                             },
@@ -393,6 +393,78 @@
                             },
                             "ext": {
                                 "description": "additional 2-winding transformer parameters currently not supported by CTM"
+                            }
+                        }
+                    }
+                },
+                "multiple_winding_transformer": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "description": "structure to hold n-winding (n>=3) transformer solution data",
+                        "required": [
+                            "uid"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "tm_w": {
+                                "description": "[-] array of tap ratios for winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/positive_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "ta_w": {
+                                "description": "[deg] array of angle phase shifts for winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "type": "number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "pt_w": {
+                                "description": "[MW or pu] array of active power entering the transformer at the terminal corresponding to winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "type": "number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "qt_w": {
+                                "description": "[MVAr or pu] array of reactive power entering the transformer at the terminal corresponding to winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "type": "number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "vm_star_node": {
+                                "description": "[pu] voltage magnitude of internal star node",
+                                "anyOf": [
+                                    { "$ref": "#/$defs/positive_number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "va_star_node": {
+                                "description": "[deg] voltage angle of internal star node",
+                                "anyOf": [
+                                    { "type": "number" },
+                                    { "$ref": "#/$defs/time_series_reference" }
+                                ]
+                            },
+                            "ext": {
+                                "description": "additional n-winding transformer parameters currently not supported by CTM"
                             }
                         }
                     }

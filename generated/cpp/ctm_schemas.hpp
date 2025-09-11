@@ -2204,6 +2204,123 @@ namespace ctm_schemas {
         BusRefElement uid;
     };
 
+    /**
+     * structure to hold n-winding (n >= 3) transformer and phase shifter data using simplified
+     * star model (2 circuit parameters per winding and 2 circuit parameters for magnetizing
+     * branch between internal star node and neutral)
+     */
+    struct NetworkMultipleWindingTransformer {
+        /**
+         * [S or pu] shunt susceptance of transformer at internal star node (magnetizing branch)
+         */
+        double b;
+        /**
+         * array of uids of buses of transformer at terminal of winding=[1,2,...,num_windings]
+         */
+        std::vector<BusFr> bus_w;
+        /**
+         * [kA or pu] array of persistent current ratings of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<CmUbA>> cm_ub_a_w;
+        /**
+         * [kA or pu] array of 4-hour current ratings of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<CmUbA>> cm_ub_b_w;
+        /**
+         * [kA or pu] array of 15-minute current ratings of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<CmUbA>> cm_ub_c_w;
+        /**
+         * additional n-winding transformer parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [S or pu] shunt conductance of transformer at internal star node (magnetizing branch)
+         */
+        double g;
+        /**
+         * transformer name
+         */
+        std::optional<std::string> name;
+        /**
+         * [MVA] array of nominal apparent powers of winding=[1,2,...,num_windings] of transformer
+         */
+        std::optional<std::vector<double>> nominal_mva_w;
+        /**
+         * number of windings, greater or equal to 3 (for 2-winding transformers, use 'transformer'
+         * object instead)
+         */
+        int64_t num_windings;
+        /**
+         * [hours] expected duration of persistent outage (time between outage and crews
+         * re-energizing the branch)
+         */
+        std::optional<double> persistent_outage_duration;
+        /**
+         * [events/year] number of expected persistent outages per year (outages not cleared by
+         * reconnectors)
+         */
+        std::optional<double> persistent_outage_rate;
+        /**
+         * [Ohm or pu] array of series resistances of winding=[1,2,...,num_windings] of transformer
+         */
+        std::vector<double> r_w;
+        /**
+         * [MVA or pu] array of persistent apparent power ratings of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<CmUbA>> sm_ub_a_w;
+        /**
+         * [MVA or pu] array of 4-hour apparent power ratings of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<CmUbA>> sm_ub_b_w;
+        /**
+         * [MVA or pu] array of 15-minute apparent power ratings of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<CmUbA>> sm_ub_c_w;
+        int64_t status;
+        /**
+         * array of status of winding=[1,2,...,num_windings] (provided status=1, status_w[w]=0
+         * indicates winding w is open, whereas status_w[w]=1 indicates winding is connected; if
+         * status=0, all windings are assumed disconnected, regardless of values in status_w)
+         */
+        std::vector<int64_t> status_w;
+        /**
+         * [deg] array of minimum angle phase shifts (angle difference = va_w - va_star -
+         * angle_shift) of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<double>> ta_lb_w;
+        /**
+         * array of number of discrete steps between ta_lb_w and ta_ub_w (including limit values) of
+         * winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<int64_t>> ta_steps_w;
+        /**
+         * [deg] array of maximum angle phase shifts (angle difference = va_w - va_star -
+         * angle_shift) of winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<double>> ta_ub_w;
+        /**
+         * [-] array of minimum tap ratios of winding=[1,2,...,num_windings] (1.0 correspond to
+         * nominal ratio, inner_vm_w = vm_w * tap_value)
+         */
+        std::optional<std::vector<double>> tm_lb_w;
+        /**
+         * array of number of discrete steps between tm_lb_w and tm_ub_w (including limit values) of
+         * winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<int64_t>> tm_steps_w;
+        /**
+         * [-] array of maximum tap ratios of winding=[1,2,...,num_windings] (1.0 correspond to
+         * nominal ratio, inner_vm_w = vm_w * tap_value)
+         */
+        std::optional<std::vector<double>> tm_ub_w;
+        BusFr uid;
+        /**
+         * [Ohm or pu] array of series impedances of winding=[1,2,...,num_windings] of transformer
+         */
+        std::vector<double> x_w;
+    };
+
     struct NetworkSwitch {
         /**
          * uid of bus at the from terminal of switch
@@ -2528,6 +2645,7 @@ namespace ctm_schemas {
         NetworkGlobalParams global_params;
         std::optional<std::vector<NetworkHvdcP2P>> hvdc_p2_p;
         std::vector<Load> load;
+        std::optional<std::vector<NetworkMultipleWindingTransformer>> multiple_winding_transformer;
         std::optional<std::vector<NetworkReserve>> reserve;
         std::optional<std::vector<NetworkShunt>> shunt;
         std::optional<std::vector<NetworkStorage>> storage;
@@ -2637,6 +2755,36 @@ namespace ctm_schemas {
         std::optional<double> vm_dc_to;
     };
 
+    using TaW = std::optional<std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, nlohmann::json>, std::string>>;
+
+    /**
+     * structure to hold initial state of n-winding transformer variables
+     */
+    struct TemporalBoundaryMultipleWindingTransformer {
+        /**
+         * additional n-winding transformer initial condition parameters currently not supported by
+         * CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [deg] array of initial angle phase shifts for winding=[1,2,...,num_windings]
+         */
+        TaW ta_w;
+        /**
+         * [-] array of initial tap ratios for winding=[1,2,...,num_windings]
+         */
+        std::vector<double> tm_w;
+        BusFr uid;
+        /**
+         * [deg] initial voltage angle of internal star node
+         */
+        double va_star_node;
+        /**
+         * [pu] initial voltage magnitude of internal star node
+         */
+        double vm_star_node;
+    };
+
     /**
      * structure to hold initial state of shunt variables
      */
@@ -2730,6 +2878,7 @@ namespace ctm_schemas {
          */
         TemporalBoundaryGlobalParams global_params;
         std::optional<std::vector<TemporalBoundaryHvdcP2P>> hvdc_p2_p;
+        std::optional<std::vector<TemporalBoundaryMultipleWindingTransformer>> multiple_winding_transformer;
         std::optional<std::vector<TemporalBoundaryShunt>> shunt;
         std::optional<std::vector<TemporalBoundaryStorage>> storage;
         std::optional<std::vector<TemporalBoundarySwitch>> temporal_boundary_switch;
@@ -2967,6 +3116,43 @@ namespace ctm_schemas {
     };
 
     /**
+     * structure to hold n-winding (n>=3) transformer solution data
+     */
+    struct SolutionMultipleWindingTransformer {
+        /**
+         * additional n-winding transformer parameters currently not supported by CTM
+         */
+        nlohmann::json ext;
+        /**
+         * [MW or pu] array of active power entering the transformer at the terminal corresponding
+         * to winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<PlFr>> pt_w;
+        /**
+         * [MVAr or pu] array of reactive power entering the transformer at the terminal
+         * corresponding to winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<PlFr>> qt_w;
+        /**
+         * [deg] array of angle phase shifts for winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<PlFr>> ta_w;
+        /**
+         * [-] array of tap ratios for winding=[1,2,...,num_windings]
+         */
+        std::optional<std::vector<PlFr>> tm_w;
+        BusFr uid;
+        /**
+         * [deg] voltage angle of internal star node
+         */
+        std::optional<PlFr> va_star_node;
+        /**
+         * [pu] voltage magnitude of internal star node
+         */
+        std::optional<PlFr> vm_star_node;
+    };
+
+    /**
      * structure to hold reserve product solution data
      */
     struct SolutionReserve {
@@ -3099,6 +3285,7 @@ namespace ctm_schemas {
          */
         SolutionGlobalParams global_params;
         std::optional<std::vector<SolutionHvdcP2P>> hvdc_p2_p;
+        std::optional<std::vector<SolutionMultipleWindingTransformer>> multiple_winding_transformer;
         std::optional<std::vector<SolutionReserve>> reserve;
         std::optional<std::vector<SolutionShunt>> shunt;
         std::optional<std::vector<SolutionStorage>> storage;
@@ -3250,6 +3437,9 @@ void to_json(json & j, const NetworkHvdcP2P & x);
 void from_json(const json & j, Load & x);
 void to_json(json & j, const Load & x);
 
+void from_json(const json & j, NetworkMultipleWindingTransformer & x);
+void to_json(json & j, const NetworkMultipleWindingTransformer & x);
+
 void from_json(const json & j, NetworkSwitch & x);
 void to_json(json & j, const NetworkSwitch & x);
 
@@ -3282,6 +3472,9 @@ void to_json(json & j, const TemporalBoundaryGlobalParams & x);
 
 void from_json(const json & j, TemporalBoundaryHvdcP2P & x);
 void to_json(json & j, const TemporalBoundaryHvdcP2P & x);
+
+void from_json(const json & j, TemporalBoundaryMultipleWindingTransformer & x);
+void to_json(json & j, const TemporalBoundaryMultipleWindingTransformer & x);
 
 void from_json(const json & j, TemporalBoundaryShunt & x);
 void to_json(json & j, const TemporalBoundaryShunt & x);
@@ -3324,6 +3517,9 @@ void to_json(json & j, const SolutionGlobalParams & x);
 
 void from_json(const json & j, SolutionHvdcP2P & x);
 void to_json(json & j, const SolutionHvdcP2P & x);
+
+void from_json(const json & j, SolutionMultipleWindingTransformer & x);
+void to_json(json & j, const SolutionMultipleWindingTransformer & x);
 
 void from_json(const json & j, SolutionReserve & x);
 void to_json(json & j, const SolutionReserve & x);
@@ -3438,6 +3634,12 @@ template <>
 struct adl_serializer<std::variant<std::vector<int64_t>, int64_t>> {
     static void from_json(const json & j, std::variant<std::vector<int64_t>, int64_t> & x);
     static void to_json(json & j, const std::variant<std::vector<int64_t>, int64_t> & x);
+};
+
+template <>
+struct adl_serializer<std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string>> {
+    static void from_json(const json & j, std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string> & x);
+    static void to_json(json & j, const std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string> & x);
 };
 
 template <>
@@ -4397,6 +4599,65 @@ namespace ctm_schemas {
         j["uid"] = x.uid;
     }
 
+    inline void from_json(const json & j, NetworkMultipleWindingTransformer& x) {
+        x.b = j.at("b").get<double>();
+        x.bus_w = j.at("bus_w").get<std::vector<BusFr>>();
+        x.cm_ub_a_w = get_stack_optional<std::vector<CmUbA>>(j, "cm_ub_a_w");
+        x.cm_ub_b_w = get_stack_optional<std::vector<CmUbA>>(j, "cm_ub_b_w");
+        x.cm_ub_c_w = get_stack_optional<std::vector<CmUbA>>(j, "cm_ub_c_w");
+        x.ext = get_untyped(j, "ext");
+        x.g = j.at("g").get<double>();
+        x.name = get_stack_optional<std::string>(j, "name");
+        x.nominal_mva_w = get_stack_optional<std::vector<double>>(j, "nominal_mva_w");
+        x.num_windings = j.at("num_windings").get<int64_t>();
+        x.persistent_outage_duration = get_stack_optional<double>(j, "persistent_outage_duration");
+        x.persistent_outage_rate = get_stack_optional<double>(j, "persistent_outage_rate");
+        x.r_w = j.at("r_w").get<std::vector<double>>();
+        x.sm_ub_a_w = get_stack_optional<std::vector<CmUbA>>(j, "sm_ub_a_w");
+        x.sm_ub_b_w = get_stack_optional<std::vector<CmUbA>>(j, "sm_ub_b_w");
+        x.sm_ub_c_w = get_stack_optional<std::vector<CmUbA>>(j, "sm_ub_c_w");
+        x.status = j.at("status").get<int64_t>();
+        x.status_w = j.at("status_w").get<std::vector<int64_t>>();
+        x.ta_lb_w = get_stack_optional<std::vector<double>>(j, "ta_lb_w");
+        x.ta_steps_w = get_stack_optional<std::vector<int64_t>>(j, "ta_steps_w");
+        x.ta_ub_w = get_stack_optional<std::vector<double>>(j, "ta_ub_w");
+        x.tm_lb_w = get_stack_optional<std::vector<double>>(j, "tm_lb_w");
+        x.tm_steps_w = get_stack_optional<std::vector<int64_t>>(j, "tm_steps_w");
+        x.tm_ub_w = get_stack_optional<std::vector<double>>(j, "tm_ub_w");
+        x.uid = j.at("uid").get<BusFr>();
+        x.x_w = j.at("x_w").get<std::vector<double>>();
+    }
+
+    inline void to_json(json & j, const NetworkMultipleWindingTransformer & x) {
+        j = json::object();
+        j["b"] = x.b;
+        j["bus_w"] = x.bus_w;
+        j["cm_ub_a_w"] = x.cm_ub_a_w;
+        j["cm_ub_b_w"] = x.cm_ub_b_w;
+        j["cm_ub_c_w"] = x.cm_ub_c_w;
+        j["ext"] = x.ext;
+        j["g"] = x.g;
+        j["name"] = x.name;
+        j["nominal_mva_w"] = x.nominal_mva_w;
+        j["num_windings"] = x.num_windings;
+        j["persistent_outage_duration"] = x.persistent_outage_duration;
+        j["persistent_outage_rate"] = x.persistent_outage_rate;
+        j["r_w"] = x.r_w;
+        j["sm_ub_a_w"] = x.sm_ub_a_w;
+        j["sm_ub_b_w"] = x.sm_ub_b_w;
+        j["sm_ub_c_w"] = x.sm_ub_c_w;
+        j["status"] = x.status;
+        j["status_w"] = x.status_w;
+        j["ta_lb_w"] = x.ta_lb_w;
+        j["ta_steps_w"] = x.ta_steps_w;
+        j["ta_ub_w"] = x.ta_ub_w;
+        j["tm_lb_w"] = x.tm_lb_w;
+        j["tm_steps_w"] = x.tm_steps_w;
+        j["tm_ub_w"] = x.tm_ub_w;
+        j["uid"] = x.uid;
+        j["x_w"] = x.x_w;
+    }
+
     inline void from_json(const json & j, NetworkSwitch& x) {
         x.bus_fr = j.at("bus_fr").get<BusRefElement>();
         x.bus_to = j.at("bus_to").get<BusRefElement>();
@@ -4596,6 +4857,7 @@ namespace ctm_schemas {
         x.global_params = j.at("global_params").get<NetworkGlobalParams>();
         x.hvdc_p2_p = get_stack_optional<std::vector<NetworkHvdcP2P>>(j, "hvdc_p2p");
         x.load = j.at("load").get<std::vector<Load>>();
+        x.multiple_winding_transformer = get_stack_optional<std::vector<NetworkMultipleWindingTransformer>>(j, "multiple_winding_transformer");
         x.reserve = get_stack_optional<std::vector<NetworkReserve>>(j, "reserve");
         x.shunt = get_stack_optional<std::vector<NetworkShunt>>(j, "shunt");
         x.storage = get_stack_optional<std::vector<NetworkStorage>>(j, "storage");
@@ -4614,6 +4876,7 @@ namespace ctm_schemas {
         j["global_params"] = x.global_params;
         j["hvdc_p2p"] = x.hvdc_p2_p;
         j["load"] = x.load;
+        j["multiple_winding_transformer"] = x.multiple_winding_transformer;
         j["reserve"] = x.reserve;
         j["shunt"] = x.shunt;
         j["storage"] = x.storage;
@@ -4688,6 +4951,25 @@ namespace ctm_schemas {
         j["vm_dc_to"] = x.vm_dc_to;
     }
 
+    inline void from_json(const json & j, TemporalBoundaryMultipleWindingTransformer& x) {
+        x.ext = get_untyped(j, "ext");
+        x.ta_w = get_stack_optional<std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, nlohmann::json>, std::string>>(j, "ta_w");
+        x.tm_w = j.at("tm_w").get<std::vector<double>>();
+        x.uid = j.at("uid").get<BusFr>();
+        x.va_star_node = j.at("va_star_node").get<double>();
+        x.vm_star_node = j.at("vm_star_node").get<double>();
+    }
+
+    inline void to_json(json & j, const TemporalBoundaryMultipleWindingTransformer & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["ta_w"] = x.ta_w;
+        j["tm_w"] = x.tm_w;
+        j["uid"] = x.uid;
+        j["va_star_node"] = x.va_star_node;
+        j["vm_star_node"] = x.vm_star_node;
+    }
+
     inline void from_json(const json & j, TemporalBoundaryShunt& x) {
         x.ext = get_untyped(j, "ext");
         x.num_steps = j.at("num_steps").get<NumStepsUbUnion>();
@@ -4751,6 +5033,7 @@ namespace ctm_schemas {
         x.gen = get_stack_optional<std::vector<TemporalBoundaryGen>>(j, "gen");
         x.global_params = j.at("global_params").get<TemporalBoundaryGlobalParams>();
         x.hvdc_p2_p = get_stack_optional<std::vector<TemporalBoundaryHvdcP2P>>(j, "hvdc_p2p");
+        x.multiple_winding_transformer = get_stack_optional<std::vector<TemporalBoundaryMultipleWindingTransformer>>(j, "multiple_winding_transformer");
         x.shunt = get_stack_optional<std::vector<TemporalBoundaryShunt>>(j, "shunt");
         x.storage = get_stack_optional<std::vector<TemporalBoundaryStorage>>(j, "storage");
         x.temporal_boundary_switch = get_stack_optional<std::vector<TemporalBoundarySwitch>>(j, "switch");
@@ -4763,6 +5046,7 @@ namespace ctm_schemas {
         j["gen"] = x.gen;
         j["global_params"] = x.global_params;
         j["hvdc_p2p"] = x.hvdc_p2_p;
+        j["multiple_winding_transformer"] = x.multiple_winding_transformer;
         j["shunt"] = x.shunt;
         j["storage"] = x.storage;
         j["switch"] = x.temporal_boundary_switch;
@@ -4918,6 +5202,29 @@ namespace ctm_schemas {
         j["vm_dc"] = x.vm_dc;
     }
 
+    inline void from_json(const json & j, SolutionMultipleWindingTransformer& x) {
+        x.ext = get_untyped(j, "ext");
+        x.pt_w = get_stack_optional<std::vector<PlFr>>(j, "pt_w");
+        x.qt_w = get_stack_optional<std::vector<PlFr>>(j, "qt_w");
+        x.ta_w = get_stack_optional<std::vector<PlFr>>(j, "ta_w");
+        x.tm_w = get_stack_optional<std::vector<PlFr>>(j, "tm_w");
+        x.uid = j.at("uid").get<BusFr>();
+        x.va_star_node = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "va_star_node");
+        x.vm_star_node = get_stack_optional<std::variant<CtmSolutionSchema, double>>(j, "vm_star_node");
+    }
+
+    inline void to_json(json & j, const SolutionMultipleWindingTransformer & x) {
+        j = json::object();
+        j["ext"] = x.ext;
+        j["pt_w"] = x.pt_w;
+        j["qt_w"] = x.qt_w;
+        j["ta_w"] = x.ta_w;
+        j["tm_w"] = x.tm_w;
+        j["uid"] = x.uid;
+        j["va_star_node"] = x.va_star_node;
+        j["vm_star_node"] = x.vm_star_node;
+    }
+
     inline void from_json(const json & j, SolutionReserve& x) {
         x.ext = get_untyped(j, "ext");
         x.shortfall = j.at("shortfall").get<PlFr>();
@@ -5011,6 +5318,7 @@ namespace ctm_schemas {
         x.gen = j.at("gen").get<std::vector<SolutionGen>>();
         x.global_params = j.at("global_params").get<SolutionGlobalParams>();
         x.hvdc_p2_p = get_stack_optional<std::vector<SolutionHvdcP2P>>(j, "hvdc_p2p");
+        x.multiple_winding_transformer = get_stack_optional<std::vector<SolutionMultipleWindingTransformer>>(j, "multiple_winding_transformer");
         x.reserve = get_stack_optional<std::vector<SolutionReserve>>(j, "reserve");
         x.shunt = get_stack_optional<std::vector<SolutionShunt>>(j, "shunt");
         x.storage = get_stack_optional<std::vector<SolutionStorage>>(j, "storage");
@@ -5025,6 +5333,7 @@ namespace ctm_schemas {
         j["gen"] = x.gen;
         j["global_params"] = x.global_params;
         j["hvdc_p2p"] = x.hvdc_p2_p;
+        j["multiple_winding_transformer"] = x.multiple_winding_transformer;
         j["reserve"] = x.reserve;
         j["shunt"] = x.shunt;
         j["storage"] = x.storage;
@@ -5547,6 +5856,46 @@ namespace nlohmann {
                 break;
             case 1:
                 j = std::get<int64_t>(x);
+                break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void adl_serializer<std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string>>::from_json(const json & j, std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string> & x) {
+        if (j.is_boolean())
+            x = j.get<bool>();
+        else if (j.is_number_integer())
+            x = j.get<int64_t>();
+        else if (j.is_number())
+            x = j.get<double>();
+        else if (j.is_string())
+            x = j.get<std::string>();
+        else if (j.is_object())
+            x = j.get<std::map<std::string, json>>();
+        else if (j.is_array())
+            x = j.get<std::vector<double>>();
+        else throw std::runtime_error("Could not deserialise!");
+    }
+
+    inline void adl_serializer<std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string>>::to_json(json & j, const std::variant<std::vector<double>, bool, double, int64_t, std::map<std::string, json>, std::string> & x) {
+        switch (x.index()) {
+            case 0:
+                j = std::get<std::vector<double>>(x);
+                break;
+            case 1:
+                j = std::get<bool>(x);
+                break;
+            case 2:
+                j = std::get<double>(x);
+                break;
+            case 3:
+                j = std::get<int64_t>(x);
+                break;
+            case 4:
+                j = std::get<std::map<std::string, json>>(x);
+                break;
+            case 5:
+                j = std::get<std::string>(x);
                 break;
             default: throw std::runtime_error("Input JSON does not conform to schema!");
         }

@@ -944,6 +944,197 @@
                         }
                     }
                 },
+                "multiple_winding_transformer": {
+                    "type": "array",
+                    "items": {
+                        "description": "structure to hold n-winding (n >= 3) transformer and phase shifter data using simplified star model (2 circuit parameters per winding and 2 circuit parameters for magnetizing branch between internal star node and neutral)",
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "status",
+                            "num_windings",
+                            "bus_w",
+                            "status_w",
+                            "r_w",
+                            "x_w",
+                            "g",
+                            "b"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "status": {
+                                "$ref": "#/$defs/status"
+                            },
+                            "num_windings": {
+                                "description": "number of windings, greater or equal to 3 (for 2-winding transformers, use 'transformer' object instead)",
+                                "type": "integer",
+                                "minimum": 3
+                            },
+                            "name": {
+                                "description": "transformer name",
+                                "type": "string"
+                            },
+                            "bus_w": {
+                                "description": "array of uids of buses of transformer at terminal of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/uid"
+                                }
+                            },
+                            "status_w": {
+                                "description": "array of status of winding=[1,2,...,num_windings] (provided status=1, status_w[w]=0 indicates winding w is open, whereas status_w[w]=1 indicates winding is connected; if status=0, all windings are assumed disconnected, regardless of values in status_w)",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/status"
+                                }
+                            },
+                            "nominal_mva_w": {
+                                "description": "[MVA] array of nominal apparent powers of winding=[1,2,...,num_windings] of transformer",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/positive_number"
+                                }
+                            },
+                            "r_w": {
+                                "description": "[Ohm or pu] array of series resistances of winding=[1,2,...,num_windings] of transformer",
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            },
+                            "x_w": {
+                                "description": "[Ohm or pu] array of series impedances of winding=[1,2,...,num_windings] of transformer",
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            },
+                            "g": {
+                                "description": "[S or pu] shunt conductance of transformer at internal star node (magnetizing branch); if in pu use primary as base voltage",
+                                "type": "number"
+                            },
+                            "b": {
+                                "description": "[S or pu] shunt susceptance of transformer at internal star node (magnetizing branch); if in pu use primary as base voltage",
+                                "type": "number"
+                            },
+                            "tm_lb_w": {
+                                "description": "[-] array of minimum tap ratios of winding=[1,2,...,num_windings] (1.0 correspond to nominal ratio, inner_vm_w = vm_w * tap_value)",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/positive_number"
+                                }
+                            },
+                            "tm_ub_w": {
+                                "description": "[-] array of maximum tap ratios of winding=[1,2,...,num_windings] (1.0 correspond to nominal ratio, inner_vm_w = vm_w * tap_value)",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/positive_number"
+                                }
+                            },
+                            "tm_steps_w":{
+                                "description": "array of number of discrete steps between tm_lb_w and tm_ub_w (including limit values) of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/positive_integer"
+                                }
+                            },
+                            "ta_lb_w": {
+                                "description": "[deg] array of minimum angle phase shifts (angle difference = va_w - va_star - angle_shift) of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            },
+                            "ta_ub_w": {
+                                "description": "[deg] array of maximum angle phase shifts (angle difference = va_w - va_star - angle_shift) of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            },
+                            "ta_steps_w":{
+                                "description": "array of number of discrete steps between ta_lb_w and ta_ub_w (including limit values) of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/positive_integer"
+                                }
+                            },
+                            "sm_ub_a_w": {
+                                "description": "[MVA or pu] array of persistent apparent power ratings of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/nonnegative_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "sm_ub_b_w": {
+                                "description": "[MVA or pu] array of 4-hour apparent power ratings of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/nonnegative_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "sm_ub_c_w": {
+                                "description": "[MVA or pu] array of 15-minute apparent power ratings of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/nonnegative_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "cm_ub_a_w": {
+                                "description": "[kA or pu] array of persistent current ratings of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/nonnegative_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "cm_ub_b_w": {
+                                "description": "[kA or pu] array of 4-hour current ratings of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/nonnegative_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "cm_ub_c_w": {
+                                "description": "[kA or pu] array of 15-minute current ratings of winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        { "$ref": "#/$defs/nonnegative_number" },
+                                        { "$ref": "#/$defs/time_series_reference" }
+                                    ]
+                                }
+                            },
+                            "persistent_outage_rate": {
+                                "description": "[events/year] number of expected persistent outages per year (outages not cleared by reconnectors)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "persistent_outage_duration": {
+                                "description": "[hours] expected duration of persistent outage (time between outage and crews re-energizing the branch)",
+                                "$ref": "#/$defs/nonnegative_number"
+                            },
+                            "ext": {
+                                "description": "additional n-winding transformer parameters currently not supported by CTM"
+                            }
+                        }
+                    }
+                },
                 "hvdc_p2p": {
                     "type": "array",
                     "items": {
@@ -4983,6 +5174,49 @@
                             },
                             "ext": {
                                 "description": "additional transformer initial condition parameters currently not supported by CTM"
+                            }
+                        }
+                    }
+                },
+                "multiple_winding_transformer": {
+                    "type": "array",
+                    "items": {
+                        "description": "structure to hold initial state of n-winding transformer variables",
+                        "type": "object",
+                        "required": [
+                            "uid",
+                            "tm_w",
+                            "ta_w",
+                            "vm_star_node",
+                            "va_star_node"
+                        ],
+                        "properties": {
+                            "uid": {
+                                "$ref": "#/$defs/uid"
+                            },
+                            "tm_w": {
+                                "description": "[-] array of initial tap ratios for winding=[1,2,...,num_windings]",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/positive_number"
+                                }
+                            },
+                            "ta_w": {
+                                "description": "[deg] array of initial angle phase shifts for winding=[1,2,...,num_windings]",
+                                "items": {
+                                    "type": "number"
+                                }
+                            },
+                            "vm_star_node": {
+                                "description": "[pu] initial voltage magnitude of internal star node",
+                                "$ref": "#/$defs/positive_number"
+                            },
+                            "va_star_node": {
+                                "description": "[deg] initial voltage angle of internal star node",
+                                "type": "number"
+                            },
+                            "ext": {
+                                "description": "additional n-winding transformer initial condition parameters currently not supported by CTM"
                             }
                         }
                     }
