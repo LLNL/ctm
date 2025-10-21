@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ctm"
+version = "0.1.0"
+authors = [
+    {name = "Ignacio Aravena"},
+    {name = "Nai-Yuan Chiang"},
+]
+description = "Common Electric Power Transmission System Model JSON Schema Specification"
+readme = "README.md"
+license-files = [ "LICENSE" ]
+requires-python = ">=3.12, <4"
+dependencies = [
+    "pydantic"
+]
+
+[project.urls]
+homepage = "https://github.com/LLNL/ctm"
+source = "https://github.com/LLNL/ctm"
+download = "https://github.com/LLNL/ctm"
+tracker = "https://github.com/LLNL/ctm/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
