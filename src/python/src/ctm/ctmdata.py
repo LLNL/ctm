@@ -1058,10 +1058,26 @@ def parse(filename):
     json_dict = json.load(f)
     f.close()
     
-    folder_path = os.path.dirname(filename)
-    ts_load_file = json_dict['time_series_data']['path_to_file']
+    if 'time_series_data' not in json_dict or not isinstance(json_dict['time_series_data'], dict):
+        raise ValueError("Missing or invalid 'time_series_data' in JSON.")
+
+    tsd = json_dict['time_series_data']
+
+    # No HDF5 path provided: ensure 'value' exists, otherwise error.
+    if 'path_to_file' not in tsd:
+        if 'value' not in tsd:
+            raise ValueError("'value' key is not in ['time_series_data'] and no 'path_to_file' was provided.")
+        return parse_obj_as(CtmData, json_dict)
+    
+    # Build absolute path to the HDF5 file
+    folder_path = os.path.dirname(os.path.abspath(os.path.expanduser(filename)))
+    ts_load_file = tsd['path_to_file']
     ts_load_file = os.path.join(folder_path, ts_load_file)
-    ts_load = h5py.File(ts_load_file)
+    
+    if not os.path.exists(ts_load_file):
+        raise FileNotFoundError(f"Cannot find HDF5 file: {ts_load_file}")
+    
+    ts_load = h5py.File(ts_load_file, "r")
 
     # --- read & normalize from HDF5 ---
     h5_names = _normalize_1d(ts_load['name'][:])        # shape: (num_load,)
