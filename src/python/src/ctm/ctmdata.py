@@ -1042,11 +1042,68 @@ class CtmData(BaseModel):
 
 from pydantic.tools import parse_obj_as
 import json
+import h5py
+import os
+import numpy as np
+
+def _normalize_1d(a):
+    """Squeeze to 1D and decode bytes -> str if needed."""
+    a = np.squeeze(a)
+    if a.dtype.kind in {"S", "O"}:
+        a = np.array([x.decode("utf-8") if isinstance(x, (bytes, bytearray)) else x for x in a])
+    return a
 
 def parse(filename):
     f = open(filename, 'r')
     json_dict = json.load(f)
     f.close()
+    
+    folder_path = os.path.dirname(filename)
+    ts_load_file = json_dict['time_series_data']['path_to_file']
+    ts_load_file = os.path.join(folder_path, ts_load_file)
+    ts_load = h5py.File(ts_load_file)
+
+    # --- read & normalize from HDF5 ---
+    h5_names = _normalize_1d(ts_load['name'][:])        # shape: (num_load,)
+    h5_times = _normalize_1d(ts_load['timestamp'][:])   # shape: (num_timestamp,)
+    h5_values = ts_load['values'][:]                    # shape: (num_load, num_timestamp)
+    h5_uid = _normalize_1d(ts_load['uid'][:]) if 'uid' in ts_load else None # shape: (num_load,)
+
+    # --- build index maps ---
+    name_to_idx = {n: i for i, n in enumerate(h5_names)}
+    time_to_idx = {t: j for j, t in enumerate(h5_times)}
+    uid_to_idx  = ({u: i for i, u in enumerate(h5_uid)} if h5_uid is not None else None)
+
+    # --- pull requested triplets from json_dict ---
+    tsd = json_dict['time_series_data']
+    req_names = _normalize_1d(np.asarray(tsd['name']))
+    req_times = _normalize_1d(np.asarray(tsd['timestamp']))
+    req_uids  = _normalize_1d(np.asarray(tsd['uid'])) if 'uid' in tsd else None
+
+    # --- look up each (name, timestamp[, uid]) and collect values ---
+    matched = []
+    for n, t in zip(req_names, req_times):
+        i = name_to_idx.get(n)
+        j = time_to_idx.get(t)
+
+        # If uid provided, cross-check/resolve row index from uid as well
+        if req_uids is not None and uid_to_idx is not None:
+            i_uid = uid_to_idx.get(req_uids[matched.__len__()])
+            # If both available and disagree, mark missing (or choose a policy)
+            if (i is not None) and (i_uid is not None) and (i != i_uid):
+                i = None
+                print("In time series data, uid and name doesn't match.")
+            # If name missing but uid available, fall back to uid
+            if i is None:
+                i = i_uid
+
+        if (i is None) or (j is None):
+            matched.append(np.nan)
+        else:
+            matched.append(h5_values[i, j])
+
+    json_dict['time_series_data']['value'] = np.asarray(matched)
+    
     return parse_obj_as(CtmData, json_dict)
 
 def dump(instance, filename):
