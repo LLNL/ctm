@@ -14,7 +14,8 @@ readme = "README.md"
 license-files = [ "LICENSE" ]
 requires-python = ">=3.12, <4"
 dependencies = [
-    "pydantic"
+    "pydantic",
+    "h5py"
 ]
 
 [project.urls]

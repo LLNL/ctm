@@ -1042,11 +1042,138 @@ class CtmData(BaseModel):
 
 from pydantic.tools import parse_obj_as
 import json
+import h5py
+import os
+import numpy as np
+from typing import Union, Optional
+from datetime import datetime
 
-def parse(filename):
-    f = open(filename, 'r')
-    json_dict = json.load(f)
-    f.close()
+def _normalize_1d(a):
+    """Squeeze to 1D and decode bytes -> str if needed."""
+    a = np.squeeze(a)
+    if a.dtype.kind in {"S", "O"}:
+        a = np.array([x.decode("utf-8") if isinstance(x, (bytes, bytearray)) else x for x in a])
+    return a
+
+def _to_unix(t: Union[datetime, str, float, int]) -> float:
+    if isinstance(t, (float, int)):
+        return float(t)
+    if isinstance(t, datetime):
+        return t.timestamp()
+    if isinstance(t, str):
+        # ISO-8601 string like "2020-01-01T00:00:00"
+        return datetime.fromisoformat(t).timestamp()
+    raise TypeError(f"Unsupported time type: {type(t)}")
+
+def parse(filename: str,
+          begin_time: Optional[Union[datetime, str, float, int]] = None,
+          end_time:   Optional[Union[datetime, str, float, int]] = None):
+    with open(filename, 'r') as f:
+        json_dict = json.load(f)
+
+    if 'time_series_data' not in json_dict or not isinstance(json_dict['time_series_data'], dict):
+        raise ValueError("Missing or invalid 'time_series_data' in JSON.")
+    tsd = json_dict['time_series_data']
+
+    # --------------------
+    # 1) Filter JSON by time first (JSON timestamps are Unix seconds in your data)
+    # --------------------
+    if begin_time is not None and end_time is not None:
+        ts = np.asarray(tsd['timestamp'], dtype=float)
+        t_start = _to_unix(begin_time)
+        t_end   = _to_unix(end_time)
+        mask = (ts >= t_start) & (ts <= t_end)
+
+        if not np.any(mask):
+            raise ValueError("No timestamps fall within the requested time window.")
+
+        # Keep only timestamps in range; drop any existing values to avoid mismatch
+        tsd['timestamp'] = ts[mask].tolist()
+        if 'values' in tsd:
+            # If values are present, assume shape (num_name, num_timestamp) and slice columns
+            try:
+                vals = np.asarray(tsd['values'], dtype=float)
+                if vals.ndim == 2 and vals.shape[1] == ts.size:
+                    tsd['values'] = vals[:, mask].tolist()
+                else:
+                    # values shape not consistent; remove to rebuild from H5
+                    tsd.pop('values', None)
+            except Exception:
+                tsd.pop('values', None)
+
+    # If there is no HDF5, either we already had values or we error out if values missing
+    if 'path_to_file' not in tsd:
+        if 'values' not in tsd:
+            raise ValueError("'values' missing and no 'path_to_file' provided to populate them.")
+        # Ensure values are lists of lists of floats for pydantic
+        vals = np.asarray(tsd['values'], dtype=float)
+        tsd['values'] = vals.tolist()
+        return parse_obj_as(CtmData, json_dict)
+
+    # --------------------
+    # 2) Map the filtered JSON (names × filtered timestamps) from the HDF5
+    # --------------------
+    folder_path = os.path.dirname(os.path.abspath(os.path.expanduser(filename)))
+    ts_load_file = os.path.join(folder_path, tsd['path_to_file'])
+    if not os.path.exists(ts_load_file):
+        raise FileNotFoundError(f"Cannot find HDF5 file: {ts_load_file}")
+
+    with h5py.File(ts_load_file, "r") as h5f:
+        h5_names  = _normalize_1d(h5f['name'][:])        # (num_bus,)
+        h5_times  = _normalize_1d(h5f['timestamp'][:])   # (num_ts,)
+        h5_values = h5f['values'][:]                     # (num_bus, num_ts)
+        h5_uid    = _normalize_1d(h5f['uid'][:]) if 'uid' in h5f else None
+
+    # Build index maps
+    name_to_idx = {n: i for i, n in enumerate(h5_names)}
+    time_to_idx = {t: j for j, t in enumerate(h5_times)}
+    uid_to_idx  = ({u: i for i, u in enumerate(h5_uid)} if h5_uid is not None else None)
+
+    # Pull requested fields from JSON (already filtered timestamps)
+    req_names = np.asarray(tsd['name'])
+    req_times = np.asarray(tsd['timestamp'], dtype=float)  # Unix seconds
+    req_uids  = np.asarray(tsd['uid']) if 'uid' in tsd else None
+
+    # Resolve row indices per name (cross-check uid if available)
+    row_indices = []
+    for k, n in enumerate(req_names):
+        i = name_to_idx.get(n)
+        if req_uids is not None and uid_to_idx is not None:
+            i_uid = uid_to_idx.get(req_uids[k])
+            if (i is not None) and (i_uid is not None) and (i != i_uid):
+                print("In time series data, uid and name don't match.")
+                i = None
+            if i is None:
+                i = i_uid
+        row_indices.append(i)
+
+    # Resolve column indices per filtered timestamp
+    col_indices = []
+    for t in req_times:
+        j = time_to_idx.get(t)
+        col_indices.append(j)
+
+    # Build values matrix (num_req_names × num_req_times)
+    num_r = len(row_indices)
+    num_c = len(col_indices)
+    values_2d = np.full((num_r, num_c), np.nan, dtype=float)
+    for r, i in enumerate(row_indices):
+        if i is None:
+            continue
+        for c, j in enumerate(col_indices):
+            if j is None:
+                continue
+            values_2d[r, c] = h5_values[i, j]
+
+    # Assign as List[List[float]] for Pydantic
+    tsd['values'] = values_2d.tolist()
+
+    # Ensure JSON lists are plain Python lists (not numpy types)
+    tsd['name'] = list(map(lambda x: x if not isinstance(x, (np.generic,)) else x.item(), tsd['name']))
+    tsd['timestamp'] = list(map(float, tsd['timestamp']))
+    if 'uid' in tsd:
+        tsd['uid'] = list(tsd['uid'])
+
     return parse_obj_as(CtmData, json_dict)
 
 def dump(instance, filename):
